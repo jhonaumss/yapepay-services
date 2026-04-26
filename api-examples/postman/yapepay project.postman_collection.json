@@ -1,0 +1,238 @@
+{
+  "info": {
+    "_postman_id": "b99fbe61-d5c8-4b1e-8467-02cdd1f36a91",
+    "name": "yapepay project",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "2089342"
+  },
+  "item": [
+    {
+      "name": "registrar usuario",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"phoneNumber\": \"972222222\",\r\n    \"fullName\": \"Maria Garcia\",\r\n    \"email\": \"maria@yapepay.com\",\r\n    \"pin\": \"123456\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3001/v1/usuarios/registro",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3001",
+          "path": [
+            "v1",
+            "usuarios",
+            "registro"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "crear transaccion",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJXT3c5LXFCM0dzdHJZcE03TThiSktUVVhuSlQwT09hY1pTWXJuSW5VVjdBIn0.eyJleHAiOjE3NzcxODQzNTYsImlhdCI6MTc3NzE4NDA1NiwianRpIjoiMWIxNDY4NTYtNjc5My00ZjQyLTlkYWItYzAyYzVjYmY2N2ExIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3JlYWxtcy95YXBlcGF5IiwiYXVkIjpbInlhcGVwYXktYXBpIiwiYWNjb3VudCJdLCJzdWIiOiJiZDBmZDBmYi1jNjIzLTQwNmQtOWViZS1lMjA5Yjg1NmEyMjQiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJ5YXBlcGF5LWFwaSIsInNlc3Npb25fc3RhdGUiOiI0OWI0YjEyYS05OTg2LTQxZWQtYWQ4Mi1hMjRiNWFiMGI0ZWEiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciIsImRlZmF1bHQtcm9sZXMteWFwZXBheSJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzaWQiOiI0OWI0YjEyYS05OTg2LTQxZWQtYWQ4Mi1hMjRiNWFiMGI0ZWEiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJKdWFuIFBlcmV6IiwicHJlZmVycmVkX3VzZXJuYW1lIjoianVhbkB5YXBlcGF5LmNvbSIsImdpdmVuX25hbWUiOiJKdWFuIiwiZmFtaWx5X25hbWUiOiJQZXJleiIsImVtYWlsIjoianVhbkB5YXBlcGF5LmNvbSJ9.YyQ8mYpmSPv_pxc6L9dv4kAUMGMj5kDVVXMLrGmAr9wPbHsifNQS0hWIx7-zjVuSPgqkJhmTLiP_Mmu9Hpw2SUjt0MZlqvEJKMOUB8uP72dksbUzd-fWVdlNSMXcIrimq16pMOKep0bIO2ZG79lgdShPDtIMaxKztOyMopxr2xkKz_Oniefy8VfntB5x7mKypIXFpKrlXgn36hC-dPyeph3HXchrRj_-qhag26fBQrwUKD8oKUK5sr8RmMoGLAzYh2CEpOl8E2YyDcJ7eO2ktkmvdkzizXzH9mo9kvIYo0zafNEOoVoyMOSaR1fMcg9hKB7PPxgLIVH4PcDZ8wsLiw",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"receiverPhone\": \"972222222\",\r\n  \"amount\": \"10.00\",\r\n  \"currency\": \"BOB\",\r\n  \"description\": \"Pago de prueba2\",\r\n  \"idempotencyKey\": \"770e8410-e29b-41d4-a716-446655440002\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3003/v1/transacciones",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3003",
+          "path": [
+            "v1",
+            "transacciones"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "inicio sesion yapepay",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "password",
+              "type": "text",
+              "uuid": "6104e573-c0d9-4c66-b934-18f8e6c75bff"
+            },
+            {
+              "key": "client_id",
+              "value": "yapepay-api",
+              "type": "text",
+              "uuid": "756fa5c1-c818-402c-8628-3b3ba46f47f8"
+            },
+            {
+              "key": "scope",
+              "value": "openid",
+              "type": "text",
+              "uuid": "776ce26d-3b5e-4a0a-ac9e-1e8883a814f8"
+            },
+            {
+              "key": "username",
+              "value": "juan@yapepay.com",
+              "type": "text",
+              "uuid": "9e5d60b8-1c8e-41a5-99eb-c28a4f585748"
+            },
+            {
+              "key": "password",
+              "value": "123456",
+              "type": "text",
+              "uuid": "587ebd43-3b49-4f80-a0bb-a4958c744ebd"
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:8080/realms/yapepay/protocol/openid-connect/token",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "realms",
+            "yapepay",
+            "protocol",
+            "openid-connect",
+            "token"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "obtener mi usuario",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJXT3c5LXFCM0dzdHJZcE03TThiSktUVVhuSlQwT09hY1pTWXJuSW5VVjdBIn0.eyJleHAiOjE3NzcxNzg2NTcsImlhdCI6MTc3NzE3ODM1NywianRpIjoiZmQ1MDVlZWEtMWVlYS00OTY2LThmY2EtNWNhNmQ5YzFiYjQ3IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3JlYWxtcy95YXBlcGF5IiwiYXVkIjpbInlhcGVwYXktYXBpIiwiYWNjb3VudCJdLCJzdWIiOiJiZDBmZDBmYi1jNjIzLTQwNmQtOWViZS1lMjA5Yjg1NmEyMjQiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJ5YXBlcGF5LWFwaSIsInNlc3Npb25fc3RhdGUiOiJkMjE4ODdlNC0zNTBkLTRiZDktYWMyMC1hNzQ1YzEyZWEzNTAiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciIsImRlZmF1bHQtcm9sZXMteWFwZXBheSJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzaWQiOiJkMjE4ODdlNC0zNTBkLTRiZDktYWMyMC1hNzQ1YzEyZWEzNTAiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJKdWFuIFBlcmV6IiwicHJlZmVycmVkX3VzZXJuYW1lIjoianVhbkB5YXBlcGF5LmNvbSIsImdpdmVuX25hbWUiOiJKdWFuIiwiZmFtaWx5X25hbWUiOiJQZXJleiIsImVtYWlsIjoianVhbkB5YXBlcGF5LmNvbSJ9.HZa29hoUp0KJPLJoSAT3g8nv0Aao2qvCEUcyA8I72kWNp2KR5L4TzOiECHs4i0poLujoau8zYU_wjnH8InEpzsixDRim3UY8YaQwlyd8jDi5oK8YNuO5Dzodrm0ORrF3mEdIWRH-8moQ06f3yby_EkL8Lh_xH2GB1TR-psPXM-ondDpyqjoY3vXCVXs0TgniIyF0vmjY7IPu2glZY1Kd5f8YRvK0X7EwDZMJjQfc4mCS8-i_Cd8otEJvHsyORRPAjdQ0WWd4QHT1FrsaetcNZnoywr3MfTVuZLMELQNFleHJPVaHo50R7iqulM6vEMg1vULFDvRuYeOKTBi7evMziA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3001/v1/usuarios/me",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3001",
+          "path": [
+            "v1",
+            "usuarios",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "obtener mi billetera",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJXT3c5LXFCM0dzdHJZcE03TThiSktUVVhuSlQwT09hY1pTWXJuSW5VVjdBIn0.eyJleHAiOjE3NzcxODQzNTYsImlhdCI6MTc3NzE4NDA1NiwianRpIjoiMWIxNDY4NTYtNjc5My00ZjQyLTlkYWItYzAyYzVjYmY2N2ExIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3JlYWxtcy95YXBlcGF5IiwiYXVkIjpbInlhcGVwYXktYXBpIiwiYWNjb3VudCJdLCJzdWIiOiJiZDBmZDBmYi1jNjIzLTQwNmQtOWViZS1lMjA5Yjg1NmEyMjQiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJ5YXBlcGF5LWFwaSIsInNlc3Npb25fc3RhdGUiOiI0OWI0YjEyYS05OTg2LTQxZWQtYWQ4Mi1hMjRiNWFiMGI0ZWEiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciIsImRlZmF1bHQtcm9sZXMteWFwZXBheSJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzaWQiOiI0OWI0YjEyYS05OTg2LTQxZWQtYWQ4Mi1hMjRiNWFiMGI0ZWEiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJKdWFuIFBlcmV6IiwicHJlZmVycmVkX3VzZXJuYW1lIjoianVhbkB5YXBlcGF5LmNvbSIsImdpdmVuX25hbWUiOiJKdWFuIiwiZmFtaWx5X25hbWUiOiJQZXJleiIsImVtYWlsIjoianVhbkB5YXBlcGF5LmNvbSJ9.YyQ8mYpmSPv_pxc6L9dv4kAUMGMj5kDVVXMLrGmAr9wPbHsifNQS0hWIx7-zjVuSPgqkJhmTLiP_Mmu9Hpw2SUjt0MZlqvEJKMOUB8uP72dksbUzd-fWVdlNSMXcIrimq16pMOKep0bIO2ZG79lgdShPDtIMaxKztOyMopxr2xkKz_Oniefy8VfntB5x7mKypIXFpKrlXgn36hC-dPyeph3HXchrRj_-qhag26fBQrwUKD8oKUK5sr8RmMoGLAzYh2CEpOl8E2YyDcJ7eO2ktkmvdkzizXzH9mo9kvIYo0zafNEOoVoyMOSaR1fMcg9hKB7PPxgLIVH4PcDZ8wsLiw",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3002/v1/billeteras/me",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3002",
+          "path": [
+            "v1",
+            "billeteras",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "recargar billetera",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJXT3c5LXFCM0dzdHJZcE03TThiSktUVVhuSlQwT09hY1pTWXJuSW5VVjdBIn0.eyJleHAiOjE3NzcxNzY3MzYsImlhdCI6MTc3NzE3NjQzNiwianRpIjoiNWY3ZGVjNmMtNmY1Ny00NDkyLWJiODYtMzA5M2U3ZjYxZjE1IiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MDgwL3JlYWxtcy95YXBlcGF5IiwiYXVkIjpbInlhcGVwYXktYXBpIiwiYWNjb3VudCJdLCJzdWIiOiJiZDBmZDBmYi1jNjIzLTQwNmQtOWViZS1lMjA5Yjg1NmEyMjQiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJ5YXBlcGF5LWFwaSIsInNlc3Npb25fc3RhdGUiOiJjZGE2MmI2OC0zZWRhLTRhMjUtYWE3Ni01YzBhY2VmNmVmYTkiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbIi8qIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJvZmZsaW5lX2FjY2VzcyIsInVtYV9hdXRob3JpemF0aW9uIiwidXNlciIsImRlZmF1bHQtcm9sZXMteWFwZXBheSJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoib3BlbmlkIHByb2ZpbGUgZW1haWwiLCJzaWQiOiJjZGE2MmI2OC0zZWRhLTRhMjUtYWE3Ni01YzBhY2VmNmVmYTkiLCJlbWFpbF92ZXJpZmllZCI6ZmFsc2UsIm5hbWUiOiJKdWFuIFBlcmV6IiwicHJlZmVycmVkX3VzZXJuYW1lIjoianVhbkB5YXBlcGF5LmNvbSIsImdpdmVuX25hbWUiOiJKdWFuIiwiZmFtaWx5X25hbWUiOiJQZXJleiIsImVtYWlsIjoianVhbkB5YXBlcGF5LmNvbSJ9.HCQk5oLtRh7w_XBhIStq86PIgvMiOkF1FYH3h-dZzPtb0H3XIyymelMOZDmOQi7i_5OFkN5fHPuYGreS51Dj42ghkUZl8ubWS5UEPA2Gc7nJx2C-g210gUmMlKOMdYqNvKcMovnf3H2VdyzH4racsA33Z1N7MkEkFnWhl_LNLym2duXFIIBT8PnBLRPkGB2g1BAV35MVFb54lgdHmSvoJoUKDPCBAy-h83lTDE4P6ttlBrpiRLmuk9Hc4szIiE2KtT8Ba_sV8w7WEo-6lzVECJKU9kLXT91eLBzXIDnFEhaTL6fEo7xkZMfy8Nkt3z2-0MUX_qTd5OF_EpggRCm68A",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"bankAccountId\": \"550e8400-e29b-41d4-a716-446655440000\",\r\n  \"amount\": \"200.00\",\r\n  \"idempotencyKey\": \"660e8400-e29b-41d4-a716-446655440001\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3002/v1/recargas",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3002",
+          "path": [
+            "v1",
+            "recargas"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
