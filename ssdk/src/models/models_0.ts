@@ -1069,6 +1069,78 @@ export namespace GetMyWalletOutput {
 /**
  * @public
  */
+export interface GetQRInput {
+  qrId: string | undefined;
+}
+
+export namespace GetQRInput {
+  const memberValidators : {
+    qrId?: __MultiConstraintValidator<string>,
+  } = {};
+  /**
+   * @internal
+   */
+  export const validate = (obj: GetQRInput, path: string = ""): __ValidationFailure[] => {
+    function getMemberValidator<T extends keyof typeof memberValidators>(member: T): NonNullable<typeof memberValidators[T]> {
+      if (memberValidators[member] === undefined) {
+        switch (member) {
+          case "qrId": {
+            memberValidators["qrId"] = new __CompositeValidator<string>([
+              new __RequiredValidator(),
+              new __PatternValidator("^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"),
+            ]);
+            break;
+          }
+        }
+      }
+      return memberValidators[member]!!;
+    }
+    return [
+      ...getMemberValidator("qrId").validate(obj.qrId, `${path}/qrId`),
+    ];
+  }
+}
+
+/**
+ * @public
+ */
+export interface GetQROutput {
+  qrCode: QRCode | undefined;
+}
+
+export namespace GetQROutput {
+  const memberValidators : {
+    qrCode?: __MultiConstraintValidator<QRCode>,
+  } = {};
+  /**
+   * @internal
+   */
+  export const validate = (obj: GetQROutput, path: string = ""): __ValidationFailure[] => {
+    function getMemberValidator<T extends keyof typeof memberValidators>(member: T): NonNullable<typeof memberValidators[T]> {
+      if (memberValidators[member] === undefined) {
+        switch (member) {
+          case "qrCode": {
+            memberValidators["qrCode"] = new __CompositeStructureValidator<QRCode>(
+              new __CompositeValidator<QRCode>([
+                new __RequiredValidator(),
+              ]),
+              QRCode.validate
+            );
+            break;
+          }
+        }
+      }
+      return memberValidators[member]!!;
+    }
+    return [
+      ...getMemberValidator("qrCode").validate(obj.qrCode, `${path}/qrCode`),
+    ];
+  }
+}
+
+/**
+ * @public
+ */
 export interface GetTransactionInput {
   txId: string | undefined;
 }

@@ -4,6 +4,7 @@ export * from "./CreateTransactionOperation";
 export * from "./GenerateQROperation";
 export * from "./GetCurrentUserOperation";
 export * from "./GetMyWalletOperation";
+export * from "./GetQROperation";
 export * from "./GetTransactionOperation";
 export * from "./ListTransactionsOperation";
 export * from "./LoginOperation";

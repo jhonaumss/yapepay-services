@@ -3,13 +3,13 @@
     "description": "@yapepay/service-ssdk server",
     "version": "0.0.1",
     "scripts": {
-        "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
+        "build": "concurrently \"npm run build:cjs\" \"npm run build:es\" \"npm run build:types\"",
         "build:cjs": "tsc -p tsconfig.cjs.json",
         "build:es": "tsc -p tsconfig.es.json",
         "build:types": "tsc -p tsconfig.types.json",
         "build:types:downlevel": "downlevel-dts dist-types dist-types/ts3.4",
         "clean": "rimraf ./dist-* && rimraf *.tsbuildinfo || exit 0",
-        "prepack": "yarn run clean && yarn run build"
+        "prepack": "npm run clean && npm run build"
     },
     "main": "./dist-cjs/index.js",
     "types": "./dist-types/index.d.ts",

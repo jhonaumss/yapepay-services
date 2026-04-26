@@ -35,6 +35,10 @@ import {
   GetMyWalletOperationServerOutput,
 } from "../server/operations/GetMyWalletOperation";
 import {
+  GetQROperationServerInput,
+  GetQROperationServerOutput,
+} from "../server/operations/GetQROperation";
+import {
   GetTransactionOperationServerInput,
   GetTransactionOperationServerOutput,
 } from "../server/operations/GetTransactionOperation";
@@ -228,6 +232,35 @@ export const deserializeGetMyWalletOperationRequest = async(
   };
   const contents: any = map({
   });
+  await collectBody(output.body, context);
+  return contents;
+}
+
+export const deserializeGetQROperationRequest = async(
+  output: __HttpRequest,
+  context: __SerdeContext
+): Promise<GetQROperationServerInput> => {
+  const contentTypeHeaderKey: string | undefined = Object.keys(output.headers).find(key => key.toLowerCase() === 'content-type');
+  if (contentTypeHeaderKey != null) {
+    const contentType = output.headers[contentTypeHeaderKey];
+    if (contentType !== undefined && contentType !== "application/json") {
+      throw new __UnsupportedMediaTypeException();
+    };
+  };
+  const acceptHeaderKey: string | undefined = Object.keys(output.headers).find(key => key.toLowerCase() === 'accept');
+  if (acceptHeaderKey != null) {
+    const accept = output.headers[acceptHeaderKey];
+    if (!__acceptMatches(accept, "application/json")) {
+      throw new __NotAcceptableException();
+    };
+  };
+  const contents: any = map({
+  });
+  const pathRegex = new RegExp("/v1/qr/(?<qrId>[^/]+)");
+  const parsedPath = output.path.match(pathRegex);
+  if (parsedPath?.groups !== undefined) {
+    contents.qrId = decodeURIComponent(parsedPath.groups.qrId);
+  }
   await collectBody(output.body, context);
   return contents;
 }
@@ -615,6 +648,39 @@ export const serializeGetMyWalletOperationResponse = async(
   let body: any;
   body = JSON.stringify(take(input, {
     'wallet': _ => se_Wallet(_, context),
+  }));
+  if (body && Object.keys(headers).map((str) => str.toLowerCase()).indexOf('content-length') === -1) {
+    const length = calculateBodyLength(body);
+    if (length !== undefined) {
+      headers = { ...headers, 'content-length': String(length) };
+    }
+  }
+  return new __HttpResponse({
+    headers,
+    body,
+    statusCode,
+  });
+}
+
+export const serializeGetQROperationResponse = async(
+  input: GetQROperationServerOutput,
+  ctx: ServerSerdeContext
+): Promise<__HttpResponse> => {
+  const context: __SerdeContext = {
+    ...ctx,
+    endpoint: () => Promise.resolve({
+      protocol: '',
+      hostname: '',
+      path: '',
+    }),
+  }
+  let statusCode: number = 200
+  let headers: any = map({}, isSerializableHeaderValue, {
+    'content-type': 'application/json',
+  });
+  let body: any;
+  body = JSON.stringify(take(input, {
+    'qrCode': _ => se_QRCode(_, context),
   }));
   if (body && Object.keys(headers).map((str) => str.toLowerCase()).indexOf('content-length') === -1) {
     const length = calculateBodyLength(body);

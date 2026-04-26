@@ -31,6 +31,11 @@ import {
   GetMyWalletOperationServerInput,
 } from "./operations/GetMyWalletOperation";
 import {
+  GetQROperation,
+  GetQROperationSerializer,
+  GetQROperationServerInput,
+} from "./operations/GetQROperation";
+import {
   GetTransactionOperation,
   GetTransactionOperationSerializer,
   GetTransactionOperationServerInput,
@@ -90,13 +95,14 @@ import {
   toUtf8,
 } from "@smithy/util-utf8";
 
-export type YapePayServiceServiceOperations = "CreateRechargeOperation" | "CreateTransactionOperation" | "GenerateQROperation" | "GetCurrentUserOperation" | "GetMyWalletOperation" | "GetTransactionOperation" | "ListTransactionsOperation" | "LoginOperation" | "RefreshTokenOperation" | "UpdateCurrentUserOperation";
+export type YapePayServiceServiceOperations = "CreateRechargeOperation" | "CreateTransactionOperation" | "GenerateQROperation" | "GetCurrentUserOperation" | "GetMyWalletOperation" | "GetQROperation" | "GetTransactionOperation" | "ListTransactionsOperation" | "LoginOperation" | "RefreshTokenOperation" | "UpdateCurrentUserOperation";
 export interface YapePayServiceService<Context> {
   CreateRechargeOperation: CreateRechargeOperation<Context>
   CreateTransactionOperation: CreateTransactionOperation<Context>
   GenerateQROperation: GenerateQROperation<Context>
   GetCurrentUserOperation: GetCurrentUserOperation<Context>
   GetMyWalletOperation: GetMyWalletOperation<Context>
+  GetQROperation: GetQROperation<Context>
   GetTransactionOperation: GetTransactionOperation<Context>
   ListTransactionsOperation: ListTransactionsOperation<Context>
   LoginOperation: LoginOperation<Context>
@@ -200,6 +206,9 @@ export class YapePayServiceServiceHandler<Context> implements __ServiceHandler<C
       case "GetMyWalletOperation" : {
         return handle(request, context, "GetMyWalletOperation", this.serializerFactory("GetMyWalletOperation"), this.service.GetMyWalletOperation, this.serializeFrameworkException, GetMyWalletOperationServerInput.validate, this.validationCustomizer);
       }
+      case "GetQROperation" : {
+        return handle(request, context, "GetQROperation", this.serializerFactory("GetQROperation"), this.service.GetQROperation, this.serializeFrameworkException, GetQROperationServerInput.validate, this.validationCustomizer);
+      }
       case "GetTransactionOperation" : {
         return handle(request, context, "GetTransactionOperation", this.serializerFactory("GetTransactionOperation"), this.service.GetTransactionOperation, this.serializeFrameworkException, GetTransactionOperationServerInput.validate, this.validationCustomizer);
       }
@@ -268,6 +277,16 @@ export const getYapePayServiceServiceHandler = <Context>(service: YapePayService
       [
       ],
       { service: "YapePayService", operation: "GetMyWalletOperation" }),
+    new httpbinding.UriSpec<"YapePayService", "GetQROperation">(
+      'GET',
+      [
+        { type: 'path_literal', value: "v1" },
+        { type: 'path_literal', value: "qr" },
+        { type: 'path' },
+      ],
+      [
+      ],
+      { service: "YapePayService", operation: "GetQROperation" }),
     new httpbinding.UriSpec<"YapePayService", "GetTransactionOperation">(
       'GET',
       [
@@ -325,6 +344,7 @@ export const getYapePayServiceServiceHandler = <Context>(service: YapePayService
       case "GenerateQROperation": return new GenerateQROperationSerializer();
       case "GetCurrentUserOperation": return new GetCurrentUserOperationSerializer();
       case "GetMyWalletOperation": return new GetMyWalletOperationSerializer();
+      case "GetQROperation": return new GetQROperationSerializer();
       case "GetTransactionOperation": return new GetTransactionOperationSerializer();
       case "ListTransactionsOperation": return new ListTransactionsOperationSerializer();
       case "LoginOperation": return new LoginOperationSerializer();
