@@ -16,14 +16,6 @@ import {
 } from "../../protocols/Aws_restJson1";
 import { YapePayServiceService } from "../YapePayServiceService";
 import {
-  UpdateCurrentUserOperation,
-  UpdateCurrentUserOperationErrors,
-  UpdateCurrentUserOperationHandler,
-  UpdateCurrentUserOperationSerializer,
-  UpdateCurrentUserOperationServerInput,
-  UpdateCurrentUserOperationServerOutput,
-} from "./UpdateCurrentUserOperation";
-import {
   ServerSerdeContext,
   ServiceException as __BaseException,
   InternalFailureException as __InternalFailureException,
