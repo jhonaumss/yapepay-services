@@ -22,10 +22,13 @@ jobs:
         include:
           - service: user-service
             ecr_repo: yapepay-dev-user-service
+            ecs_service: yapepay-dev-user-service
           - service: wallet-service
             ecr_repo: yapepay-dev-wallet-service
+            ecs_service: yapepay-dev-wallet-service
           - service: transaction-service
             ecr_repo: yapepay-dev-transaction-service
+            ecs_service: yapepay-dev-transaction-service
 
     steps:
       - uses: actions/checkout@v4
@@ -58,7 +61,8 @@ jobs:
         run: |
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
-            --service ${{ matrix.service }} \
+            --service ${{ matrix.ecs_service }} \
+            --desired-count 1 \
             --force-new-deployment \
             --no-cli-pager
 
