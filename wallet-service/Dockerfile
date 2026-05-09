@@ -6,7 +6,7 @@ WORKDIR /repo
 
 # 1. Build ssdk (shared SDK used by all services)
 COPY ssdk/ ./ssdk/
-RUN cd ssdk && npm ci && npm run build
+RUN cd ssdk && npm install && npm run build
 
 # 2. Build wallet-service
 COPY wallet-service/ ./wallet-service/

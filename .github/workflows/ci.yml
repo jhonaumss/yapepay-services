@@ -31,7 +31,7 @@ jobs:
       - name: Build ssdk
         run: |
           cd ssdk
-          npm ci
+          npm install
           npm run build
 
       - name: Install ${{ matrix.service }} dependencies
