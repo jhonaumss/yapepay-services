@@ -1,0 +1,119 @@
+name: cd
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  # ECR repo names match ServicesStack in yapepay-infra:
+  #   yapepay-dev-{user,wallet,transaction}-service
+  # Lambda function names match ServerlessStack in yapepay-infra:
+  #   yapepay-dev-{qr,notification}-handler
+  ECS_CLUSTER: yapepay-dev-cluster
+
+jobs:
+  # ── ECS Fargate (user / wallet / transaction) ───────────────────────────────
+  fargate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: user-service
+            ecr_repo: yapepay-dev-user-service
+          - service: wallet-service
+            ecr_repo: yapepay-dev-wallet-service
+          - service: transaction-service
+            ecr_repo: yapepay-dev-transaction-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push ${{ matrix.service }}
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -f ${{ matrix.service }}/Dockerfile \
+            -t $REGISTRY/${{ matrix.ecr_repo }}:$IMAGE_TAG \
+            -t $REGISTRY/${{ matrix.ecr_repo }}:latest \
+            .
+          docker push $REGISTRY/${{ matrix.ecr_repo }}:$IMAGE_TAG
+          docker push $REGISTRY/${{ matrix.ecr_repo }}:latest
+
+      - name: Force new ECS deployment
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ matrix.service }} \
+            --force-new-deployment \
+            --no-cli-pager
+
+  # ── Lambda (qr / notification) ──────────────────────────────────────────────
+  lambda:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: qr-service
+            function_name: yapepay-dev-qr-handler
+          - service: notification-service
+            function_name: yapepay-dev-notification-handler
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build ssdk
+        run: |
+          cd ssdk
+          npm ci
+          npm run build
+
+      - name: Build ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          npm ci
+          npm run build
+          npm prune --omit=dev
+
+      - name: Package Lambda zip
+        run: |
+          mkdir -p /tmp/lambda-pkg
+          # Flatten dist/ to root so handler path is: lambda.handler → lambda.js
+          cp -r ${{ matrix.service }}/dist/. /tmp/lambda-pkg/
+          cp -r ${{ matrix.service }}/node_modules /tmp/lambda-pkg/node_modules
+          cd /tmp/lambda-pkg
+          zip -r /tmp/${{ matrix.service }}.zip .
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ matrix.function_name }} \
+            --zip-file fileb:///tmp/${{ matrix.service }}.zip \
+            --no-cli-pager

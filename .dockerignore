@@ -1,0 +1,8 @@
+**/node_modules
+**/dist
+**/dist-cjs
+**/dist-es
+**/dist-types
+**/.git
+**/coverage
+**/*.log
