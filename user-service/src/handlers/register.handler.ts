@@ -1,4 +1,11 @@
+import {
+  AdminAddUserToGroupCommand,
+  AdminCreateUserCommand,
+  AdminSetUserPasswordCommand,
+  CognitoIdentityProviderClient,
+} from "@aws-sdk/client-cognito-identity-provider";
 import bcrypt from "bcrypt";
+
 import { pool } from "../db/client";
 
 interface RegisterInput {
@@ -8,123 +15,93 @@ interface RegisterInput {
   pin: string;
 }
 
-async function createKeycloakUser(
+const cognitoClient = new CognitoIdentityProviderClient({
+  region: process.env.AWS_REGION ?? "us-east-1",
+});
+
+async function createCognitoUser(
   fullName: string,
   email: string,
-  password: string
+  pin: string,
 ): Promise<string> {
-  // 1. Obtener admin token
-  const tokenRes = await fetch(
-    `${process.env.KEYCLOAK_URL}/realms/master/protocol/openid-connect/token`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "password",
-        client_id: "admin-cli",
-        username: process.env.KEYCLOAK_ADMIN || "admin",
-        password: process.env.KEYCLOAK_ADMIN_PASSWORD || "admin123",
-      }),
-    }
-  );
-  const tokenData = await tokenRes.json() as { access_token: string };
-  const adminToken = tokenData.access_token;
+  const userPoolId = process.env.COGNITO_USER_POOL_ID!;
 
-  // 2. Crear usuario en Keycloak
-  const [firstName, ...rest] = fullName.split(" ");
-  const lastName = rest.join(" ");
-
-  const createRes = await fetch(
-    `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${adminToken}`,
-      },
-      body: JSON.stringify({
-        username: email,
-        email,
-        firstName,
-        lastName,
-        enabled: true,
-        credentials: [{ type: "password", value: password, temporary: false }],
-        realmRoles: ["user"],
-      }),
-    }
+  // Create the user — SUPPRESS skips the welcome/temp-password email
+  const createResponse = await cognitoClient.send(
+    new AdminCreateUserCommand({
+      UserPoolId: userPoolId,
+      Username: email,
+      MessageAction: "SUPPRESS",
+      TemporaryPassword: pin,
+      UserAttributes: [
+        { Name: "email", Value: email },
+        { Name: "name", Value: fullName },
+        { Name: "email_verified", Value: "true" },
+      ],
+    }),
   );
 
-  if (!createRes.ok) {
-    const err = await createRes.json()as { errorMessage: string };
-    throw new Error(err.errorMessage || "Failed to create Keycloak user");
-  }
+  const userId = createResponse.User?.Attributes?.find(a => a.Name === "sub")?.Value;
+  if (!userId) throw new Error("Failed to retrieve Cognito user sub");
 
-  // 3. Obtener el sub (userId) del usuario creado
-  const location = createRes.headers.get("location");
-  const keycloakUserId = location!.split("/").pop()!;
-
-  // 4. Asignar rol 'user'
-  const rolesRes = await fetch(
-    `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/roles/user`,
-    {
-      headers: { Authorization: `Bearer ${adminToken}` },
-    }
-  );
-  const role = await rolesRes.json();
-
-  await fetch(
-    `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakUserId}/role-mappings/realm`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${adminToken}`,
-      },
-      body: JSON.stringify([role]),
-    }
+  // Set a permanent password so the user is not stuck in FORCE_CHANGE_PASSWORD
+  await cognitoClient.send(
+    new AdminSetUserPasswordCommand({
+      UserPoolId: userPoolId,
+      Username: email,
+      Password: pin,
+      Permanent: true,
+    }),
   );
 
-  return keycloakUserId;
+  // Assign to the "user" group (replaces Keycloak realm role)
+  await cognitoClient.send(
+    new AdminAddUserToGroupCommand({
+      UserPoolId: userPoolId,
+      Username: email,
+      GroupName: "user",
+    }),
+  );
+
+  return userId;
 }
 
 export async function registerHandler(input: RegisterInput) {
   const { phoneNumber, fullName, email, pin } = input;
   const pinHash = await bcrypt.hash(pin, 12);
+  const identifier = email ?? phoneNumber;
 
-  // 1. Crear en Keycloak primero — obtener el sub
-  const keycloakUserId = await createKeycloakUser(
-    fullName,
-    email ?? phoneNumber,
-    pin
-  );
-  console.log("Created Keycloak user with ID:", keycloakUserId);
+  const cognitoUserId = await createCognitoUser(fullName, identifier, pin);
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
     const existing = await client.query(
       `SELECT "userId" FROM usuario WHERE "phoneNumber" = $1`,
-      [phoneNumber]
+      [phoneNumber],
     );
     if (existing.rows.length > 0) throw new Error("Phone number already registered");
 
-    // 2. Insertar en BD usando el sub de Keycloak como userId
     const result = await client.query(
       `INSERT INTO usuario ("userId", "phoneNumber", "fullName", "email", "pinHash")
        VALUES ($1, $2, $3, $4, $5)
        RETURNING "userId", "phoneNumber", "fullName", "email", "kycStatus", "createdAt"`,
-      [keycloakUserId, phoneNumber, fullName, email ?? null, pinHash]
+      [cognitoUserId, phoneNumber, fullName, email ?? null, pinHash],
     );
 
     const user = result.rows[0];
     await client.query("COMMIT");
 
-    // 3. Crear billetera en wallet-service
-    await fetch(`http://localhost:3002/v1/billeteras`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.userId }),
-    });
+    // Call wallet-service through the shared ALB to create the initial wallet
+    const walletUrl = process.env.WALLET_SERVICE_URL;
+    if (walletUrl) {
+      await fetch(`${walletUrl}/v1/billeteras`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.userId }),
+      });
+    }
 
     return { user };
   } catch (err) {

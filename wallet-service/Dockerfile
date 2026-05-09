@@ -31,4 +31,4 @@ EXPOSE 3002
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD nc -z localhost 3002 || exit 1
 
-CMD ["node", "dist/index.js"]
+CMD ["/bin/sh", "-c", "node dist/db/migrate.js && exec node dist/index.js"]

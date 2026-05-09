@@ -1,6 +1,33 @@
+import { Client } from "pg";
 import { pool } from "./client";
 
+const DB_NAME = process.env.DB_NAME ?? "yapepay_transactions";
+
+async function ensureDatabase(): Promise<void> {
+  const admin = new Client({
+    host: process.env.DB_HOST ?? "localhost",
+    port: parseInt(process.env.DB_PORT ?? "5433"),
+    user: process.env.DB_USER ?? "yapepay",
+    password: process.env.DB_PASSWORD ?? "yapepay123",
+    database: "postgres",
+  });
+  await admin.connect();
+  try {
+    const { rows } = await admin.query(
+      "SELECT 1 FROM pg_database WHERE datname = $1",
+      [DB_NAME]
+    );
+    if (rows.length === 0) {
+      await admin.query(`CREATE DATABASE "${DB_NAME}"`);
+      console.log(`Created database: ${DB_NAME}`);
+    }
+  } finally {
+    await admin.end();
+  }
+}
+
 async function migrate() {
+  await ensureDatabase();
   const client = await pool.connect();
   try {
     await client.query(`
