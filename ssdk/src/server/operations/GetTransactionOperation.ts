@@ -18,14 +18,6 @@ import {
 } from "../../protocols/Aws_restJson1";
 import { YapePayServiceService } from "../YapePayServiceService";
 import {
-  GetTransactionOperation,
-  GetTransactionOperationErrors,
-  GetTransactionOperationHandler,
-  GetTransactionOperationSerializer,
-  GetTransactionOperationServerInput,
-  GetTransactionOperationServerOutput,
-} from "./GetTransactionOperation";
-import {
   ServerSerdeContext,
   ServiceException as __BaseException,
   InternalFailureException as __InternalFailureException,

@@ -15,14 +15,6 @@ import {
 } from "../../protocols/Aws_restJson1";
 import { YapePayServiceService } from "../YapePayServiceService";
 import {
-  GetMyWalletOperation,
-  GetMyWalletOperationErrors,
-  GetMyWalletOperationHandler,
-  GetMyWalletOperationSerializer,
-  GetMyWalletOperationServerInput,
-  GetMyWalletOperationServerOutput,
-} from "./GetMyWalletOperation";
-import {
   ServerSerdeContext,
   ServiceException as __BaseException,
   InternalFailureException as __InternalFailureException,

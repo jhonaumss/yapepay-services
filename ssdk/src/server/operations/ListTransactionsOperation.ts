@@ -16,14 +16,6 @@ import {
 } from "../../protocols/Aws_restJson1";
 import { YapePayServiceService } from "../YapePayServiceService";
 import {
-  ListTransactionsOperation,
-  ListTransactionsOperationErrors,
-  ListTransactionsOperationHandler,
-  ListTransactionsOperationSerializer,
-  ListTransactionsOperationServerInput,
-  ListTransactionsOperationServerOutput,
-} from "./ListTransactionsOperation";
-import {
   ServerSerdeContext,
   ServiceException as __BaseException,
   InternalFailureException as __InternalFailureException,

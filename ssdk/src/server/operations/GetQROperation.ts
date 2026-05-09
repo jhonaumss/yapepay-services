@@ -18,14 +18,6 @@ import {
 } from "../../protocols/Aws_restJson1";
 import { YapePayServiceService } from "../YapePayServiceService";
 import {
-  GetQROperation,
-  GetQROperationErrors,
-  GetQROperationHandler,
-  GetQROperationSerializer,
-  GetQROperationServerInput,
-  GetQROperationServerOutput,
-} from "./GetQROperation";
-import {
   ServerSerdeContext,
   ServiceException as __BaseException,
   InternalFailureException as __InternalFailureException,

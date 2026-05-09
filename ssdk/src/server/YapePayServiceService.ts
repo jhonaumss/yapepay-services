@@ -1,11 +1,6 @@
 // smithy-typescript generated code
 import { serializeFrameworkException } from "../protocols/Aws_restJson1";
 import {
-  YapePayServiceService,
-  YapePayServiceServiceHandler,
-  YapePayServiceServiceOperations,
-} from "./YapePayServiceService";
-import {
   CreateRechargeOperation,
   CreateRechargeOperationSerializer,
   CreateRechargeOperationServerInput,
