@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - user-service
+          - wallet-service
+          - transaction-service
+          - qr-service
+          - notification-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # ssdk is a file: dependency — build it before each service
+      - name: Build ssdk
+        run: |
+          cd ssdk
+          npm ci
+          npm run build
+
+      - name: Install ${{ matrix.service }} dependencies
+        run: |
+          cd ${{ matrix.service }}
+          npm ci
+
+      - name: Build ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          npm run build
+
+      - name: Test ${{ matrix.service }}
+        run: |
+          cd ${{ matrix.service }}
+          npm test --if-present
