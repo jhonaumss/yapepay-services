@@ -1,0 +1,146 @@
+{
+  "info": {
+    "_postman_id": "4309c077-0c0c-4745-8eaa-0ce2559e75bb",
+    "name": "yapepay-aws",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "2089342"
+  },
+  "item": [
+    {
+      "name": "registrar usuario",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"phoneNumber\": \"975555555\",\r\n    \"fullName\": \"Andres Garcia\",\r\n    \"email\": \"andres@yapepay.com\",\r\n    \"pin\": \"123456\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "yapepay-dev-alb-717626426.us-east-1.elb.amazonaws.com/v1/usuarios/registro",
+          "host": [
+            "yapepay-dev-alb-717626426",
+            "us-east-1",
+            "elb",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "v1",
+            "usuarios",
+            "registro"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "inicio sesion yapepay",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"andres@yapepay.com\",\r\n  \"pin\": \"123456\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "yapepay-dev-alb-717626426.us-east-1.elb.amazonaws.com/v1/usuarios/login",
+          "host": [
+            "yapepay-dev-alb-717626426",
+            "us-east-1",
+            "elb",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "v1",
+            "usuarios",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "obtener mi usuario",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJraWQiOiJ4TmQ2QnR4XC8xRXRrY2ppeHZ0V0RkNldidVhPV0NaS3NpdUg1T2NpUlE4Zz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3NDE4MDRlOC0wMDYxLTcwOGQtY2UwOS04NDZjNGIyODEzM2YiLCJjb2duaXRvOmdyb3VwcyI6WyJ1c2VyIl0sImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xX3dLUjFuYWdXayIsImNsaWVudF9pZCI6IjVvcDQ3dmExcTBxdDk2dmRrbDBvb3N0Y2NyIiwib3JpZ2luX2p0aSI6IjE1ZGQ4OGM3LTVmZmYtNDc1Zi1hYmRhLWRkNzY4MWE4YjE5MyIsImV2ZW50X2lkIjoiMTc3YjcxOGYtZjE3OS00YWNlLTk5YmQtYjA2MjU5ZTVkNjAzIiwidG9rZW5fdXNlIjoiYWNjZXNzIiwic2NvcGUiOiJhd3MuY29nbml0by5zaWduaW4udXNlci5hZG1pbiIsImF1dGhfdGltZSI6MTc3ODM4MzE3OSwiZXhwIjoxNzc4Mzg2Nzc5LCJpYXQiOjE3NzgzODMxNzksImp0aSI6ImZiNmM1NjIyLWYzZTMtNGZmMi05N2FjLTRkOTkyNjEwYTU2MyIsInVzZXJuYW1lIjoiNzQxODA0ZTgtMDA2MS03MDhkLWNlMDktODQ2YzRiMjgxMzNmIn0.rvgDMRXXrd8aj_TzEU5R-osddc7TSSGxQLXQO5Elv5RlcJ_Gm86hcjYVm0YKqWyphe6aimMZANXVl6kYy133ZB29tswsIC8ELUxb-X3Tl-EGoqa47iX79wmfyvahH2Gztmd-CMJnRFUIh9IpvvOP2Rdp7BmoaseL2JZ0f4XEtiy2nnbqsM5hurW8zInv0yPSba1788QN4WfRmsqFIAHKy0_9COyzFR3C8-QOK9X4Wcq3t1s6H_VJM-o9IQvOhbF7RiZbB8zUPbEBDG-qv1E7GKUmHHGDlnWiLr48fiABidGAFvvl_dnBYrwqx9cIq5Ou2ljwpouJXbc6XghtnxRAjA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "yapepay-dev-alb-717626426.us-east-1.elb.amazonaws.com/v1/usuarios/me",
+          "host": [
+            "yapepay-dev-alb-717626426",
+            "us-east-1",
+            "elb",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "v1",
+            "usuarios",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "obtener mi billetera",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJraWQiOiJ4TmQ2QnR4XC8xRXRrY2ppeHZ0V0RkNldidVhPV0NaS3NpdUg1T2NpUlE4Zz0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI3NDE4MDRlOC0wMDYxLTcwOGQtY2UwOS04NDZjNGIyODEzM2YiLCJjb2duaXRvOmdyb3VwcyI6WyJ1c2VyIl0sImlzcyI6Imh0dHBzOlwvXC9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbVwvdXMtZWFzdC0xX3dLUjFuYWdXayIsImNsaWVudF9pZCI6IjVvcDQ3dmExcTBxdDk2dmRrbDBvb3N0Y2NyIiwib3JpZ2luX2p0aSI6IjE1ZGQ4OGM3LTVmZmYtNDc1Zi1hYmRhLWRkNzY4MWE4YjE5MyIsImV2ZW50X2lkIjoiMTc3YjcxOGYtZjE3OS00YWNlLTk5YmQtYjA2MjU5ZTVkNjAzIiwidG9rZW5fdXNlIjoiYWNjZXNzIiwic2NvcGUiOiJhd3MuY29nbml0by5zaWduaW4udXNlci5hZG1pbiIsImF1dGhfdGltZSI6MTc3ODM4MzE3OSwiZXhwIjoxNzc4Mzg2Nzc5LCJpYXQiOjE3NzgzODMxNzksImp0aSI6ImZiNmM1NjIyLWYzZTMtNGZmMi05N2FjLTRkOTkyNjEwYTU2MyIsInVzZXJuYW1lIjoiNzQxODA0ZTgtMDA2MS03MDhkLWNlMDktODQ2YzRiMjgxMzNmIn0.rvgDMRXXrd8aj_TzEU5R-osddc7TSSGxQLXQO5Elv5RlcJ_Gm86hcjYVm0YKqWyphe6aimMZANXVl6kYy133ZB29tswsIC8ELUxb-X3Tl-EGoqa47iX79wmfyvahH2Gztmd-CMJnRFUIh9IpvvOP2Rdp7BmoaseL2JZ0f4XEtiy2nnbqsM5hurW8zInv0yPSba1788QN4WfRmsqFIAHKy0_9COyzFR3C8-QOK9X4Wcq3t1s6H_VJM-o9IQvOhbF7RiZbB8zUPbEBDG-qv1E7GKUmHHGDlnWiLr48fiABidGAFvvl_dnBYrwqx9cIq5Ou2ljwpouJXbc6XghtnxRAjA",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "yapepay-dev-alb-717626426.us-east-1.elb.amazonaws.com/v1/billeteras/me",
+          "host": [
+            "yapepay-dev-alb-717626426",
+            "us-east-1",
+            "elb",
+            "amazonaws",
+            "com"
+          ],
+          "path": [
+            "v1",
+            "billeteras",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
