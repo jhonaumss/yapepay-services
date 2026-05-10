@@ -96,11 +96,18 @@ export async function registerHandler(input: RegisterInput) {
     // Call wallet-service through the shared ALB to create the initial wallet
     const walletUrl = process.env.WALLET_SERVICE_URL;
     if (walletUrl) {
-      await fetch(`${walletUrl}/v1/billeteras`, {
+      const walletRes = await fetch(`${walletUrl}/v1/billeteras`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.userId }),
       });
+      if (!walletRes.ok) {
+        console.error(`wallet-service responded ${walletRes.status} for userId ${user.userId}`);
+      } else {
+        console.log(`wallet created for userId ${user.userId}`);
+      }
+    } else {
+      console.warn("WALLET_SERVICE_URL not set — wallet not created");
     }
 
     return { user };
