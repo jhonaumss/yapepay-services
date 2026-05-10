@@ -19,9 +19,15 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3003
 
-# Copy pruned node_modules (includes resolved ssdk) and compiled output
+# Copy pruned node_modules and compiled output
 COPY --from=builder /repo/transaction-service/node_modules ./node_modules/
 COPY --from=builder /repo/transaction-service/dist ./dist/
+# Explicitly copy ssdk build output — file: deps may be symlinked by npm,
+# which breaks after multi-stage COPY (symlink target doesn't exist in runtime).
+COPY --from=builder /repo/ssdk/dist-cjs ./node_modules/@yapepay/service-ssdk/dist-cjs/
+COPY --from=builder /repo/ssdk/dist-es ./node_modules/@yapepay/service-ssdk/dist-es/
+COPY --from=builder /repo/ssdk/dist-types ./node_modules/@yapepay/service-ssdk/dist-types/
+COPY --from=builder /repo/ssdk/package.json ./node_modules/@yapepay/service-ssdk/package.json
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
