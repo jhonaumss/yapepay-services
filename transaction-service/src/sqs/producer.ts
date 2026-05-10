@@ -1,16 +1,8 @@
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
 
-const sqs = new SQSClient({
-  endpoint: process.env.SQS_ENDPOINT || "http://localhost:9324",
-  region: process.env.SQS_REGION || "us-east-1",
-  credentials: {
-    accessKeyId: "local",
-    secretAccessKey: "local",
-  },
-});
+const sqs = new SQSClient({ region: process.env.AWS_REGION ?? "us-east-1" });
 
-const QUEUE_URL = process.env.SQS_QUEUE_URL ||
-  "http://localhost:9324/000000000000/yapepay-transactions";
+const QUEUE_URL = process.env.SQS_QUEUE_URL;
 
 export async function publishTransactionCompleted(event: {
   txId: string;
@@ -19,6 +11,10 @@ export async function publishTransactionCompleted(event: {
   amount: string;
   currency: string;
 }) {
+  if (!QUEUE_URL) {
+    console.warn("[SQS] SQS_QUEUE_URL not set — skipping notification publish");
+    return;
+  }
   await sqs.send(
     new SendMessageCommand({
       QueueUrl: QUEUE_URL,
