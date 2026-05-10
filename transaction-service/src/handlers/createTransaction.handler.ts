@@ -37,8 +37,10 @@ export async function createTransactionHandler(
       };
     }
     // 2. Resolver receiverPhone → receiverId via user-service
+    const internalKey = process.env.INTERNAL_API_KEY ?? "";
     const userRes = await fetch(
-      `${USER_SERVICE_URL}/v1/usuarios/portelefono?numero=${input.receiverPhone}`
+      `${USER_SERVICE_URL}/v1/usuarios/portelefono?numero=${input.receiverPhone}`,
+      { headers: { "x-internal-key": internalKey } }
     );
     if (!userRes.ok) {
       throw { message: "Receiver not found", code: "RECEIVER_NOT_FOUND" };
@@ -47,24 +49,23 @@ export async function createTransactionHandler(
     const receiverId = userData.user.userId;
 
     // 3. Debitar billetera del sender via wallet-service
+    const internalHeaders = { "Content-Type": "application/json", "x-internal-key": internalKey };
     const debitRes = await fetch(`${WALLET_SERVICE_URL}/v1/billeteras/debito`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: internalHeaders,
       body: JSON.stringify({
         userId: senderId,
         amount: input.amount ? parseFloat(input.amount) : 0,
       }),
     });
-    console.log(debitRes);
     if (!debitRes.ok) {
       const err = await debitRes.json() as { message: string; };
       throw { code: "INSUFFICIENT_FUNDS", ...err };
     }
-    console.log('Debit successful');
     // 4. Acreditar billetera del receiver via wallet-service
     const creditRes = await fetch(`${WALLET_SERVICE_URL}/v1/billeteras/credito`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: internalHeaders,
       body: JSON.stringify({
         userId: receiverId,
         amount: input.amount ? parseFloat(input.amount) : 0,
@@ -74,7 +75,7 @@ export async function createTransactionHandler(
       // Revertir débito si falla el crédito
       await fetch(`${WALLET_SERVICE_URL}/v1/billeteras/credito`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: internalHeaders,
         body: JSON.stringify({
           userId: senderId,
           amount: input.amount ? parseFloat(input.amount) : 0,
@@ -82,7 +83,6 @@ export async function createTransactionHandler(
       });
       throw { message: "Failed to credit receiver wallet" };
     }
-    console.log('Credit successful');
 
     // 5. Registrar transacción
     const tx = await client.query(

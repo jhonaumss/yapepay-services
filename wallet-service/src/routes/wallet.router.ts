@@ -5,11 +5,12 @@ import {
 } from "@yapepay/service-ssdk";
 import { getMyWalletHandler } from "../handlers/getMyWallet.handler";
 import { createRechargeHandler } from "../handlers/createRecharge.handler";
+import { requireRole } from "../middleware/role.middleware";
 
 export const walletRouter = Router();
 
-// GET /v1/billeteras/me
-walletRouter.get("/billeteras/me", async (req: Request, res: Response) => {
+// GET /v1/billeteras/me — regular users only
+walletRouter.get("/billeteras/me", requireRole('regular_user'), async (req: Request, res: Response) => {
   try {
     const userId = req.headers["x-user-id"] as string;
     const input: GetMyWalletOperationServerInput = {};
@@ -20,8 +21,8 @@ walletRouter.get("/billeteras/me", async (req: Request, res: Response) => {
   }
 });
 
-// POST /v1/recargas
-walletRouter.post("/recargas", async (req: Request, res: Response) => {
+// POST /v1/recargas — cashier users only
+walletRouter.post("/recargas", requireRole('cashier_user'), async (req: Request, res: Response) => {
   try {
     const userId = req.headers["x-user-id"] as string;
     const input: CreateRechargeOperationServerInput = {

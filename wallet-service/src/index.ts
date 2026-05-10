@@ -4,14 +4,15 @@ dotenv.config();
 import express from "express";
 import { walletRouter } from "./routes/wallet.router";
 import { authMiddleware } from "./middleware/auth.middleware";
+import { requireInternalKey } from "./middleware/role.middleware";
 
 const app = express();
 const PORT = process.env.PORT || 3002;
 
 app.use(express.json());
 
-// Rutas internas sin auth
-app.post("/v1/billeteras", async (req, res) => {
+// Internal routes — validated by shared key, no user JWT required
+app.post("/v1/billeteras", requireInternalKey, async (req, res) => {
   const { createWalletHandler } = await import("./handlers/createWallet.handler");
   try {
     const result = await createWalletHandler(req.body.userId);
@@ -21,9 +22,8 @@ app.post("/v1/billeteras", async (req, res) => {
   }
 });
 
-// POST /v1/billeteras/debito — interno
-app.post("/v1/billeteras/debito", async (req , res) => {
-  const {debitWalletHandler} = await import("./handlers/debitWallet.handler");
+app.post("/v1/billeteras/debito", requireInternalKey, async (req, res) => {
+  const { debitWalletHandler } = await import("./handlers/debitWallet.handler");
   try {
     const result = await debitWalletHandler(req.body);
     res.status(200).json(result);
@@ -32,9 +32,8 @@ app.post("/v1/billeteras/debito", async (req , res) => {
   }
 });
 
-// POST /v1/billeteras/credito — interno
-app.post("/v1/billeteras/credito", async (req, res) => {
-  const {creditWalletHandler} = await import("./handlers/creditWallet.handler");
+app.post("/v1/billeteras/credito", requireInternalKey, async (req, res) => {
+  const { creditWalletHandler } = await import("./handlers/creditWallet.handler");
   try {
     const result = await creditWalletHandler(req.body);
     res.status(200).json(result);

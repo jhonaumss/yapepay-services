@@ -6,11 +6,12 @@ import {
 import { getCurrentUserHandler } from "../handlers/getCurrentUser.handler";
 import { updateCurrentUserHandler } from "../handlers/updateCurrentUser.handler";
 import { getUserByPhoneHandler } from "../handlers/getUserByPhone.handler";
+import { requireRole } from "../middleware/role.middleware";
 
 export const userRouter = Router();
 
 // GET /v1/usuarios/me
-userRouter.get("/usuarios/me", async (req: Request, res: Response) => {
+userRouter.get("/usuarios/me", requireRole('regular_user'), async (req: Request, res: Response) => {
   try {
     const userId = req.headers["x-user-id"] as string;
     const input: GetCurrentUserOperationServerInput = {};
@@ -22,7 +23,7 @@ userRouter.get("/usuarios/me", async (req: Request, res: Response) => {
 });
 
 // PATCH /v1/usuarios/me
-userRouter.patch("/usuarios/me", async (req: Request, res: Response) => {
+userRouter.patch("/usuarios/me", requireRole('regular_user'), async (req: Request, res: Response) => {
   try {
     const userId = req.headers["x-user-id"] as string;
     const input: UpdateCurrentUserOperationServerInput = { updates: req.body.updates };
