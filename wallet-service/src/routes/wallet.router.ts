@@ -24,13 +24,17 @@ walletRouter.get("/billeteras/me", requireRole('regular_user'), async (req: Requ
 // POST /v1/recargas — cashier users only
 walletRouter.post("/recargas", requireRole('cashier_user'), async (req: Request, res: Response) => {
   try {
-    const userId = req.headers["x-user-id"] as string;
+    const targetUserId = req.body.targetUserId as string;
+    if (!targetUserId) {
+      res.status(400).json({ message: "targetUserId is required" });
+      return;
+    }
     const input: CreateRechargeOperationServerInput = {
       bankAccountId: req.body.bankAccountId,
       amount: req.body.amount,
       idempotencyKey: req.body.idempotencyKey,
     };
-    const result = await createRechargeHandler(userId, input);
+    const result = await createRechargeHandler(targetUserId, input);
     res.status(201).json(result);
   } catch (err: any) {
     res.status(400).json({ message: err.message });
