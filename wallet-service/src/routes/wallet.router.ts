@@ -1,7 +1,6 @@
 import { Router, Request, Response } from "express";
 import {
   GetMyWalletOperationServerInput,
-  CreateRechargeOperationServerInput,
 } from "@yapepay/service-ssdk";
 import { getMyWalletHandler } from "../handlers/getMyWallet.handler";
 import { createRechargeHandler } from "../handlers/createRecharge.handler";
@@ -24,17 +23,15 @@ walletRouter.get("/billeteras/me", requireRole('regular_user'), async (req: Requ
 // POST /v1/recargas — cashier users only
 walletRouter.post("/recargas", requireRole('cashier_user'), async (req: Request, res: Response) => {
   try {
-    const targetUserId = req.body.targetUserId as string;
-    if (!targetUserId) {
-      res.status(400).json({ message: "targetUserId is required" });
+    const phoneNumber = req.body.phoneNumber as string;
+    if (!phoneNumber) {
+      res.status(400).json({ message: "phoneNumber is required" });
       return;
     }
-    const input: CreateRechargeOperationServerInput = {
-      bankAccountId: req.body.bankAccountId,
+    const result = await createRechargeHandler(phoneNumber, {
       amount: req.body.amount,
       idempotencyKey: req.body.idempotencyKey,
-    };
-    const result = await createRechargeHandler(targetUserId, input);
+    });
     res.status(201).json(result);
   } catch (err: any) {
     res.status(400).json({ message: err.message });

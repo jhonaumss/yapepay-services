@@ -12,6 +12,9 @@ jest.mock('../../src/db/client', () => ({
   pool: { query: jest.fn(), connect: jest.fn() },
 }));
 
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
+
 import { pool } from '../../src/db/client';
 
 const mockQuery = pool.query as jest.Mock;
@@ -69,43 +72,61 @@ describe('POST /v1/recargas', () => {
     const res = await request(app)
       .post('/v1/recargas')
       .set('Authorization', 'Bearer token')
-      .send({ targetUserId: 'customer-1', bankAccountId: 'bank-1', amount: '100', idempotencyKey: 'k-1' });
+      .send({ phoneNumber: '+59171234567', amount: '100', idempotencyKey: 'k-1' });
 
     expect(res.status).toBe(403);
   });
 
-  it('returns 400 when targetUserId is missing', async () => {
+  it('returns 400 when phoneNumber is missing', async () => {
     const res = await request(app)
       .post('/v1/recargas')
       .set('Authorization', 'Bearer token')
       .set('x-test-roles', 'cashier_user')
-      .send({ bankAccountId: 'bank-1', amount: '100', idempotencyKey: 'k-1' });
+      .send({ amount: '100', idempotencyKey: 'k-1' });
 
     expect(res.status).toBe(400);
-    expect(res.body.message).toBe('targetUserId is required');
+    expect(res.body.message).toBe('phoneNumber is required');
   });
 
-  it('returns 201 and credits the target user wallet', async () => {
+  it('returns 201 and credits the resolved user wallet', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({ user: { userId: 'customer-1' } }),
+    } as any);
+
     const rechargeRow = { txId: 'tx-1', amount: 100, status: 'COMPLETED', createdAt: new Date() };
     mockClient.query
-      .mockResolvedValueOnce({ rows: [] })   // BEGIN
-      .mockResolvedValueOnce({ rows: [] })   // idempotency check
-      .mockResolvedValueOnce({ rows: [] })   // UPDATE billetera (target user)
+      .mockResolvedValueOnce({ rows: [] })           // BEGIN
+      .mockResolvedValueOnce({ rows: [] })           // idempotency check
+      .mockResolvedValueOnce({ rows: [] })           // UPDATE billetera
       .mockResolvedValueOnce({ rows: [rechargeRow] }) // INSERT recarga
-      .mockResolvedValueOnce({ rows: [] });  // COMMIT
+      .mockResolvedValueOnce({ rows: [] });          // COMMIT
 
     const res = await request(app)
       .post('/v1/recargas')
       .set('Authorization', 'Bearer token')
       .set('x-test-roles', 'cashier_user')
-      .send({ targetUserId: 'customer-1', bankAccountId: 'bank-1', amount: '100', idempotencyKey: 'k-1' });
+      .send({ phoneNumber: '+59171234567', amount: '100', idempotencyKey: 'k-1' });
 
     expect(res.status).toBe(201);
-    // The wallet credited must be the target user's, not the cashier's
     const updateCall = mockClient.query.mock.calls.find(
       (c: any[]) => typeof c[0] === 'string' && c[0].includes('UPDATE billetera')
     );
     expect(updateCall[1][1]).toBe('customer-1');
+  });
+
+  it('returns 400 when phone number is not found', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 } as any);
+
+    const res = await request(app)
+      .post('/v1/recargas')
+      .set('Authorization', 'Bearer token')
+      .set('x-test-roles', 'cashier_user')
+      .send({ phoneNumber: '+59100000000', amount: '100', idempotencyKey: 'k-1' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toContain('No user found');
   });
 });
 
