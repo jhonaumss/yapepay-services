@@ -1,12 +1,30 @@
-import serverlessHttp from 'serverless-http';
-import { APIGatewayProxyEventV2, Context } from 'aws-lambda';
+import { SecretsManagerClient, GetSecretValueCommand } from "@aws-sdk/client-secrets-manager";
+import type { Context } from "aws-lambda";
 
-import { app } from './index';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let serverlessApp: ((event: any, context: any) => Promise<any>) | null = null;
 
-const serverlessApp = serverlessHttp(app, { requestId: 'x-request-id' });
+// Runs once at Lambda cold start: fetch DB credentials, run migration, init app.
+// Dynamic imports ensure the pg Pool is created after env vars are populated.
+const bootstrapPromise = (async () => {
+  if (process.env.DB_SECRET_ARN) {
+    const sm = new SecretsManagerClient({ region: process.env.AWS_REGION ?? "us-east-1" });
+    const res = await sm.send(new GetSecretValueCommand({ SecretId: process.env.DB_SECRET_ARN }));
+    const secret = JSON.parse(res.SecretString!);
+    process.env.DB_USER = secret.username;
+    process.env.DB_PASSWORD = secret.password;
+  }
 
-export const handler = async (event: APIGatewayProxyEventV2, context: Context) => {
-  // Reuse DB connections across warm Lambda invocations
+  const { runMigration } = await import("./db/migrate");
+  await runMigration();
+
+  const serverlessHttp = (await import("serverless-http")).default;
+  const { app } = await import("./index");
+  serverlessApp = serverlessHttp(app, { requestId: "x-request-id" });
+})();
+
+export const handler = async (event: any, context: Context) => {
   context.callbackWaitsForEmptyEventLoop = false;
-  return serverlessApp(event, context);
+  await bootstrapPromise;
+  return serverlessApp!(event, context);
 };
