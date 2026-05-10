@@ -1,3 +1,4 @@
+import { pool } from "../db/client";
 import {
   GetTransactionOperationServerInput,
   GetTransactionOperationServerOutput,
@@ -7,19 +8,33 @@ export async function getTransactionHandler(
   input: GetTransactionOperationServerInput,
   userId: string
 ): Promise<GetTransactionOperationServerOutput> {
-  console.log(`[getTransaction] userId=${userId} txId=${input.txId}`);
+  const result = await pool.query(
+    `SELECT * FROM transaccion WHERE "txId" = $1`,
+    [input.txId]
+  );
 
-  // TODO: buscar en PostgreSQL, verificar que userId sea sender o receiver
+  if (result.rows.length === 0) {
+    throw { message: "Transaction not found", code: "NOT_FOUND" };
+  }
+
+  const row = result.rows[0];
+
+  if (row.senderId !== userId && row.receiverId !== userId) {
+    throw { message: "Transaction not found", code: "NOT_FOUND" };
+  }
+
   return {
     transaction: {
-      txId: input.txId,
-      senderId: userId,
-      receiverId: "placeholder",
-      amount: "0.00",
-      currency: "BOB",
-      type: "P2P_TRANSFER",
-      status: "COMPLETED",
-      createdAt: new Date(),
+      txId: row.txId,
+      senderId: row.senderId,
+      receiverId: row.receiverId,
+      amount: row.amount.toString(),
+      currency: row.currency,
+      type: row.type,
+      status: row.status,
+      description: row.description,
+      createdAt: row.createdAt,
+      completedAt: row.completedAt,
     },
   };
 }
