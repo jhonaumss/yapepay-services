@@ -1,20 +1,54 @@
 name: cd
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
 
 env:
   AWS_REGION: us-east-1
-  # ECR repo names match ServicesStack in yapepay-infra:
-  #   yapepay-dev-{user,wallet,transaction}-service
-  # Lambda function names match ServerlessStack in yapepay-infra:
-  #   yapepay-dev-{qr,notification}-handler
   ECS_CLUSTER: yapepay-dev-cluster
 
 jobs:
+  # ── Tests (all services, runs on PR and push) ────────────────────────────────
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [user-service, wallet-service, transaction-service, qr-service]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Build ssdk
+        run: |
+          cd ssdk
+          npm ci
+          npm run build
+
+      - name: Install dependencies
+        run: |
+          cd ${{ matrix.service }}
+          npm ci
+
+      - name: Run tests
+        run: |
+          cd ${{ matrix.service }}
+          npm test
+
   # ── ECS Fargate (user / wallet / transaction) ───────────────────────────────
   fargate:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -68,6 +102,8 @@ jobs:
 
   # ── Lambda (qr / notification) ──────────────────────────────────────────────
   lambda:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

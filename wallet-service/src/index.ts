@@ -6,7 +6,7 @@ import { walletRouter } from "./routes/wallet.router";
 import { authMiddleware } from "./middleware/auth.middleware";
 import { requireInternalKey } from "./middleware/role.middleware";
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3002;
 
 app.use(express.json());
