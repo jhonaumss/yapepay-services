@@ -49,13 +49,18 @@ async function migrate() {
       CREATE TABLE IF NOT EXISTS recarga (
         "txId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         "userId" UUID NOT NULL,
-        "bankAccountId" UUID NOT NULL,
+        "bankAccountId" UUID,
         "amount" DECIMAL(15,2) NOT NULL CHECK ("amount" > 0),
         "status" VARCHAR(20) NOT NULL DEFAULT 'PENDING',
         "idempotencyKey" UUID NOT NULL UNIQUE,
         "createdAt" TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
+
+    // Drop NOT NULL on bankAccountId if the table already existed with the constraint
+    await client.query(`
+      ALTER TABLE recarga ALTER COLUMN "bankAccountId" DROP NOT NULL;
+    `).catch(() => { /* column already nullable, ignore */ });
 
     console.log("Migration completed successfully - wallets");
   } finally {
