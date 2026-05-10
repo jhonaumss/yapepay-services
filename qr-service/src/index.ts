@@ -4,6 +4,7 @@ dotenv.config();
 import express, { Request, Response } from "express";
 import { qrRouter } from "./routes/qr.routes";
 import { authMiddleware } from "./middleware/auth.middleware";
+import { requireInternalKey, requireRole } from "./middleware/role.middleware";
 import { useQRHandler } from "./handlers/useQR.handler";
 
 export const app = express();
@@ -11,8 +12,8 @@ const PORT = process.env.PORT || 3004;
 
 app.use(express.json());
 
-// Internal endpoint — called by transaction-service, no user auth required
-app.patch("/v1/qr/:qrId/use", async (req: Request, res: Response) => {
+// Internal endpoint — validated by shared key, no user JWT required
+app.patch("/v1/qr/:qrId/use", requireInternalKey, async (req: Request, res: Response) => {
   try {
     const qrId = Array.isArray(req.params.qrId) ? req.params.qrId[0] : req.params.qrId;
     const result = await useQRHandler(qrId);
@@ -24,6 +25,7 @@ app.patch("/v1/qr/:qrId/use", async (req: Request, res: Response) => {
 });
 
 app.use(authMiddleware);
+app.use(requireRole('regular_user'));
 app.use("/v1", qrRouter);
 
 if (!process.env.LAMBDA_TASK_ROOT) {

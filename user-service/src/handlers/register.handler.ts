@@ -8,11 +8,14 @@ import bcrypt from "bcrypt";
 
 import { pool } from "../db/client";
 
+type UserRole = 'regular_user' | 'cashier_user';
+
 interface RegisterInput {
   phoneNumber: string;
   fullName: string;
   email?: string;
   pin: string;
+  role?: UserRole;
 }
 
 const cognitoClient = new CognitoIdentityProviderClient({
@@ -23,6 +26,7 @@ async function createCognitoUser(
   fullName: string,
   email: string,
   pin: string,
+  role: UserRole,
 ): Promise<string> {
   const userPoolId = process.env.COGNITO_USER_POOL_ID!;
 
@@ -54,12 +58,11 @@ async function createCognitoUser(
     }),
   );
 
-  // Assign to the "user" group (replaces Keycloak realm role)
   await cognitoClient.send(
     new AdminAddUserToGroupCommand({
       UserPoolId: userPoolId,
       Username: email,
-      GroupName: "user",
+      GroupName: role,
     }),
   );
 
@@ -67,11 +70,11 @@ async function createCognitoUser(
 }
 
 export async function registerHandler(input: RegisterInput) {
-  const { phoneNumber, fullName, email, pin } = input;
+  const { phoneNumber, fullName, email, pin, role = 'regular_user' } = input;
   const pinHash = await bcrypt.hash(pin, 12);
   const identifier = email ?? phoneNumber;
 
-  const cognitoUserId = await createCognitoUser(fullName, identifier, pin);
+  const cognitoUserId = await createCognitoUser(fullName, identifier, pin, role);
 
   const client = await pool.connect();
   try {
@@ -98,7 +101,10 @@ export async function registerHandler(input: RegisterInput) {
     if (walletUrl) {
       const walletRes = await fetch(`${walletUrl}/v1/billeteras`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-internal-key": process.env.INTERNAL_API_KEY ?? "",
+        },
         body: JSON.stringify({ userId: user.userId }),
       });
       if (!walletRes.ok) {

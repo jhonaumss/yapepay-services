@@ -4,6 +4,7 @@ dotenv.config();
 import express from "express";
 import { userRouter } from "./routes/user.router";
 import { authMiddleware } from "./middleware/auth.middleware";
+import { requireInternalKey } from "./middleware/role.middleware";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -20,7 +21,7 @@ app.post("/v1/usuarios/registro", async (req, res) => {
   }
 });
 
-app.get("/v1/usuarios/portelefono", async (req, res) => {
+app.get("/v1/usuarios/portelefono", requireInternalKey, async (req, res) => {
   const { getUserByPhoneHandler } = await import("./handlers/getUserByPhone.handler");
   try {
     const phone = req.query.numero as string;

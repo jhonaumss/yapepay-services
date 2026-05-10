@@ -38,8 +38,11 @@ export async function createQRTransactionHandler(input: QRPaymentInput, senderId
     }
 
     // 2. Atomically claim the QR — marks it as used, returns payment details
+    const internalKey = process.env.INTERNAL_API_KEY ?? "";
+    const internalHeaders = { "Content-Type": "application/json", "x-internal-key": internalKey };
     const qrRes = await fetch(`${QR_SERVICE_URL}/v1/qr/${input.qrId}/use`, {
       method: "PATCH",
+      headers: { "x-internal-key": internalKey },
     });
     if (!qrRes.ok) {
       const err = await qrRes.json() as { message: string };
@@ -58,7 +61,7 @@ export async function createQRTransactionHandler(input: QRPaymentInput, senderId
     // 3. Debit sender
     const debitRes = await fetch(`${WALLET_SERVICE_URL}/v1/billeteras/debito`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: internalHeaders,
       body: JSON.stringify({ userId: senderId, amount }),
     });
     if (!debitRes.ok) {
@@ -69,13 +72,13 @@ export async function createQRTransactionHandler(input: QRPaymentInput, senderId
     // 4. Credit receiver
     const creditRes = await fetch(`${WALLET_SERVICE_URL}/v1/billeteras/credito`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: internalHeaders,
       body: JSON.stringify({ userId: receiverId, amount }),
     });
     if (!creditRes.ok) {
       await fetch(`${WALLET_SERVICE_URL}/v1/billeteras/credito`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: internalHeaders,
         body: JSON.stringify({ userId: senderId, amount }),
       });
       throw { message: "Failed to credit receiver wallet" };

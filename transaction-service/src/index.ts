@@ -4,12 +4,14 @@ dotenv.config();
 import express from "express";
 import { transactionRouter } from "./routes/transaction.router";
 import { authMiddleware } from "./middleware/auth.middleware";
+import { requireRole } from "./middleware/role.middleware";
 
 const app = express();
 const PORT = process.env.PORT || 3003;
 
 app.use(express.json());
 app.use(authMiddleware);
+app.use(requireRole('regular_user'));
 app.use("/v1", transactionRouter);
 
 app.listen(PORT, () => {
