@@ -11,6 +11,10 @@ RUN cd ssdk && npm install && npm run build
 # 2. Build transaction-service
 COPY transaction-service/ ./transaction-service/
 RUN cd transaction-service && npm ci && npm run build && npm prune --omit=dev
+# npm installs file: deps as symlinks; dereference so Node resolves transitive
+# deps (tslib etc.) from /app/node_modules instead of the broken symlink target.
+RUN SSDK=/repo/transaction-service/node_modules/@yapepay/service-ssdk && \
+    if [ -L "$SSDK" ]; then cp -rL "$SSDK" /tmp/ssdk && rm "$SSDK" && mv /tmp/ssdk "$SSDK"; fi
 
 # ── Runtime ──────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runtime
@@ -19,15 +23,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3003
 
-# Copy pruned node_modules and compiled output
 COPY --from=builder /repo/transaction-service/node_modules ./node_modules/
 COPY --from=builder /repo/transaction-service/dist ./dist/
-# Explicitly copy ssdk build output — file: deps may be symlinked by npm,
-# which breaks after multi-stage COPY (symlink target doesn't exist in runtime).
-COPY --from=builder /repo/ssdk/dist-cjs ./node_modules/@yapepay/service-ssdk/dist-cjs/
-COPY --from=builder /repo/ssdk/dist-es ./node_modules/@yapepay/service-ssdk/dist-es/
-COPY --from=builder /repo/ssdk/dist-types ./node_modules/@yapepay/service-ssdk/dist-types/
-COPY --from=builder /repo/ssdk/package.json ./node_modules/@yapepay/service-ssdk/package.json
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
