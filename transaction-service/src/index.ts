@@ -6,7 +6,7 @@ import { transactionRouter } from "./routes/transaction.router";
 import { authMiddleware } from "./middleware/auth.middleware";
 import { requireRole } from "./middleware/role.middleware";
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3003;
 
 app.use(express.json());

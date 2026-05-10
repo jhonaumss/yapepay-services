@@ -6,7 +6,7 @@ import { userRouter } from "./routes/user.router";
 import { authMiddleware } from "./middleware/auth.middleware";
 import { requireInternalKey } from "./middleware/role.middleware";
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(express.json());
