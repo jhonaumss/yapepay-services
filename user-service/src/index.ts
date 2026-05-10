@@ -30,6 +30,16 @@ app.get("/v1/usuarios/portelefono", async (req, res) => {
     res.status(404).json({ message: err.message });
   }
 });
+app.post("/v1/usuarios/login", async (req, res) => {
+  const { loginHandler } = await import("./handlers/login.handler");
+  try {
+    const result = await loginHandler(req.body);
+    res.status(200).json(result);
+  } catch (err: any) {
+    res.status(401).json({ message: err.message });
+  }
+});
+
 // Rutas protegidas
 app.use(authMiddleware);
 app.use("/v1", userRouter);
