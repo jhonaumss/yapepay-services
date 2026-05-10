@@ -56,11 +56,13 @@ transactionRouter.get("/transacciones", async (req: Request, res: Response) => {
 
 // GET /v1/transacciones/:txId
 transactionRouter.get("/transacciones/:txId", async (req: Request, res: Response) => {
-  const txId = Array.isArray(req.params.txId) ? req.params.txId[0] : req.params.txId;
-  const input: GetTransactionOperationServerInput = {
-    txId,
-  };
-  const userId = req.headers["x-user-id"] as string;
-  const result = await getTransactionHandler(input, userId);
-  res.status(200).json(result);
+  try {
+    const txId = Array.isArray(req.params.txId) ? req.params.txId[0] : req.params.txId;
+    const input: GetTransactionOperationServerInput = { txId };
+    const userId = req.headers["x-user-id"] as string;
+    const result = await getTransactionHandler(input, userId);
+    res.status(200).json(result);
+  } catch (err: any) {
+    res.status(404).json({ message: err.message });
+  }
 });
