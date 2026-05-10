@@ -5,10 +5,27 @@ import {
   GetTransactionOperationServerInput,
 } from "@yapepay/service-ssdk";
 import { createTransactionHandler } from "../handlers/createTransaction.handler";
+import { createQRTransactionHandler } from "../handlers/createQRTransaction.handler";
 import { listTransactionsHandler } from "../handlers/listTransactions.handler";
 import { getTransactionHandler } from "../handlers/getTransaction.handler";
 
 export const transactionRouter = Router();
+
+// POST /v1/transacciones/qr — pay via QR code
+transactionRouter.post("/transacciones/qr", async (req: Request, res: Response) => {
+  try {
+    const userId = req.headers["x-user-id"] as string;
+    const result = await createQRTransactionHandler({
+      qrId: req.body.qrId,
+      idempotencyKey: req.body.idempotencyKey,
+      description: req.body.description,
+    }, userId);
+    res.status(201).json(result);
+  } catch (err: any) {
+    const status = err.code === "INSUFFICIENT_FUNDS" ? 422 : err.code === "QR_INVALID" ? 409 : 400;
+    res.status(status).json({ message: err.message });
+  }
+});
 
 // POST /v1/transacciones
 transactionRouter.post("/transacciones", async (req: Request, res: Response) => {
