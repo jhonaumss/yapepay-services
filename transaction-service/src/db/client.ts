@@ -9,6 +9,7 @@ export const pool = new Pool({
   password: process.env.DB_PASSWORD || "yapepay123",
   database: process.env.DB_NAME || "yapepay_transactions",
   max: 10,
+  ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
 });
 
 pool.on("error", (err) => {

@@ -10,6 +10,7 @@ async function ensureDatabase(): Promise<void> {
     user: process.env.DB_USER ?? "yapepay",
     password: process.env.DB_PASSWORD ?? "yapepay123",
     database: "postgres",
+    ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
   });
   await admin.connect();
   try {
