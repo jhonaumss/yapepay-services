@@ -1,6 +1,6 @@
 import { pool } from "./client";
 
-async function migrate() {
+export async function runMigration(): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query(`
@@ -18,15 +18,17 @@ async function migrate() {
     `);
 
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_qr_user 
+      CREATE INDEX IF NOT EXISTS idx_qr_user
       ON codigoqr("userId", "createdAt" DESC);
     `);
 
     console.log("Migration completed successfully - qr");
   } finally {
     client.release();
-    await pool.end();
   }
 }
 
-migrate().catch(console.error);
+// CLI mode: node dist/db/migrate.js
+if (require.main === module) {
+  runMigration().then(() => pool.end()).catch(console.error);
+}
