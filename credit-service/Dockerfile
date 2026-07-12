@@ -22,7 +22,11 @@ COPY credit-service/src ./src
 COPY credit-service/training/__init__.py ./training/__init__.py
 COPY credit-service/training/src ./training/src
 
-RUN useradd --system --no-create-home appuser
+# training/data/ isn't copied in (see note above) — data_loading.py creates it
+# at runtime when downloading raw CSVs from S3, so appuser needs write access.
+RUN useradd --system --create-home appuser \
+    && mkdir -p training/data \
+    && chown -R appuser:appuser /app
 USER appuser
 
 EXPOSE 8000
