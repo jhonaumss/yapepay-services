@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import cors from "cors";
 import express from "express";
 import { walletRouter } from "./routes/wallet.router";
 import { creditRouter } from "./routes/credit.router";
@@ -10,6 +11,9 @@ import { requireInternalKey } from "./middleware/role.middleware";
 export const app = express();
 const PORT = process.env.PORT || 3002;
 
+// Web SPA (yapepay-web) calls this API cross-origin — bearer-token auth only,
+// no cookies involved, so a permissive origin is safe here.
+app.use(cors());
 app.use(express.json());
 
 // Internal routes — validated by shared key, no user JWT required

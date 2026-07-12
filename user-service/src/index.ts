@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import cors from "cors";
 import express from "express";
 import { userRouter } from "./routes/user.router";
 import { authMiddleware } from "./middleware/auth.middleware";
@@ -9,6 +10,9 @@ import { requireInternalKey } from "./middleware/role.middleware";
 export const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Web SPA (yapepay-web) calls this API cross-origin — bearer-token auth only,
+// no cookies involved, so a permissive origin is safe here.
+app.use(cors());
 app.use(express.json());
 // Ruta pública — registro no requiere token
 app.post("/v1/usuarios/registro", async (req, res) => {
