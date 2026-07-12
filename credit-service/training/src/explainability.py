@@ -49,11 +49,11 @@ def explain_row(explainer: shap.TreeExplainer, x_row: pd.DataFrame, top_k: int =
     factors = []
     for i in order:
         column = x_row.columns[i]
-        impact = float(values[i]) / total
+        impact = float(values[i]) / float(total)
         factors.append(
             {
                 "factor": FEATURE_LABELS_ES.get(column, column),
-                "impact": round(abs(impact), 4),
+                "impact": float(round(abs(impact), 4)),
                 "direction": "NEGATIVO" if values[i] > 0 else "POSITIVO",
             }
         )
