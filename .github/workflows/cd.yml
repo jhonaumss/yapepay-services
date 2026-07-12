@@ -8,16 +8,20 @@ on:
 
 env:
   AWS_REGION: us-east-1
+  # Matches ServicesStack in yapepay-infra (infrastructure/yapepay-infra).
   ECS_CLUSTER: yapepay-dev-cluster
 
+permissions:
+  contents: read
+
 jobs:
-  # ── Tests (all services, runs on PR and push) ────────────────────────────────
+  # ── Tests (all Node services, runs on PR and push) ──────────────────────────
   test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        service: [user-service, wallet-service, transaction-service, qr-service]
+        service: [user-service, wallet-service, transaction-service, qr-service, notification-service]
 
     steps:
       - uses: actions/checkout@v4
@@ -32,7 +36,7 @@ jobs:
       - name: Build ssdk
         run: |
           cd ssdk
-          npm install
+          npm ci
           npm run build
 
       - name: Install dependencies
@@ -45,9 +49,30 @@ jobs:
           cd ${{ matrix.service }}
           npm test
 
-  # ── ECS Fargate (user / wallet / transaction) ───────────────────────────────
+  test-credit-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd credit-service
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: |
+          cd credit-service
+          pytest tests -v
+
+  # ── ECS Fargate: user / wallet / transaction / credit ───────────────────────
   fargate:
-    needs: test
+    needs: [test, test-credit-service]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
@@ -57,12 +82,19 @@ jobs:
           - service: user-service
             ecr_repo: yapepay-dev-user-service
             ecs_service: yapepay-dev-user-service
+            dockerfile: user-service/Dockerfile
           - service: wallet-service
             ecr_repo: yapepay-dev-wallet-service
             ecs_service: yapepay-dev-wallet-service
+            dockerfile: wallet-service/Dockerfile
           - service: transaction-service
             ecr_repo: yapepay-dev-transaction-service
             ecs_service: yapepay-dev-transaction-service
+            dockerfile: transaction-service/Dockerfile
+          - service: credit-service
+            ecr_repo: yapepay-dev-credit-service
+            ecs_service: yapepay-dev-credit-service
+            dockerfile: credit-service/Dockerfile
 
     steps:
       - uses: actions/checkout@v4
@@ -84,7 +116,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build \
-            -f ${{ matrix.service }}/Dockerfile \
+            -f ${{ matrix.dockerfile }} \
             -t $REGISTRY/${{ matrix.ecr_repo }}:$IMAGE_TAG \
             -t $REGISTRY/${{ matrix.ecr_repo }}:latest \
             .
@@ -100,7 +132,7 @@ jobs:
             --force-new-deployment \
             --no-cli-pager
 
-  # ── Lambda (qr / notification) ──────────────────────────────────────────────
+  # ── Lambda: qr-service / notification-service ───────────────────────────────
   lambda:
     needs: test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -120,12 +152,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Build ssdk
         run: |
           cd ssdk
-          npm install
+          npm ci
           npm run build
 
       - name: Build ${{ matrix.service }}

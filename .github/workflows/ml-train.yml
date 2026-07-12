@@ -1,0 +1,153 @@
+name: ml-train
+
+# Two ways this fires:
+#  - workflow_dispatch: a human kicks off a retrain manually.
+#  - repository_dispatch (type "retrain-credit-model"): the scheduled
+#    EventBridge rule + Lambda in infrastructure/yapepay-infra's
+#    RetrainTriggerStack.
+on:
+  workflow_dispatch: {}
+  repository_dispatch:
+    types: [retrain-credit-model]
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: yapepay-dev-cluster
+
+permissions:
+  contents: read
+
+jobs:
+  # Training runs as an ECS Fargate *task* inside the VPC — not directly on
+  # this runner — because it needs to reach the shared RDS Postgres instance
+  # directly (MLflow's backend store, no dedicated tracking server), which a
+  # GitHub-hosted runner cannot. See credit-service/training/README.md.
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push training image (shares credit-service's image)
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -f credit-service/Dockerfile -t $REGISTRY/yapepay-dev-credit-service:latest .
+          docker push $REGISTRY/yapepay-dev-credit-service:latest
+
+      - name: Fetch training task network config
+        id: task-config
+        run: |
+          TASK_DEF_ARN=$(aws cloudformation describe-stacks --stack-name YapepayDevTrainingTaskStack \
+            --query "Stacks[0].Outputs[?ExportName=='yapepay-dev-credit-training-task-def-arn'].OutputValue" --output text)
+          SG_ID=$(aws cloudformation describe-stacks --stack-name YapepayDevTrainingTaskStack \
+            --query "Stacks[0].Outputs[?ExportName=='yapepay-dev-credit-training-sg-id'].OutputValue" --output text)
+          SUBNET_IDS=$(aws cloudformation describe-stacks --stack-name YapepayDevNetworkStack \
+            --query "Stacks[0].Outputs[?ExportName=='yapepay-dev-public-subnet-ids'].OutputValue" --output text)
+          echo "task_def_arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
+          echo "sg_id=$SG_ID" >> "$GITHUB_OUTPUT"
+          echo "subnet_ids=$SUBNET_IDS" >> "$GITHUB_OUTPUT"
+
+      - name: Run training task and wait for completion
+        id: run-training
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ steps.task-config.outputs.task_def_arn }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.task-config.outputs.subnet_ids }}],securityGroups=[${{ steps.task-config.outputs.sg_id }}],assignPublicIp=ENABLED}" \
+            --overrides '{"containerOverrides":[{"name":"credit-training","command":["python","-m","training.src.train"]}]}' \
+            --query "tasks[0].taskArn" --output text)
+          echo "task_arn=$TASK_ARN" >> "$GITHUB_OUTPUT"
+          aws ecs wait tasks-stopped --cluster ${{ env.ECS_CLUSTER }} --tasks "$TASK_ARN"
+
+      - name: Check training task exit code
+        run: |
+          EXIT_CODE=$(aws ecs describe-tasks --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks ${{ steps.run-training.outputs.task_arn }} \
+            --query "tasks[0].containers[0].exitCode" --output text)
+          echo "Training task exit code: $EXIT_CODE"
+          test "$EXIT_CODE" = "0"
+
+  # Requires manual approval via the "credit-model-promotion" GitHub
+  # Environment (Settings → Environments → add required reviewers) — the
+  # human half of perfil 5.4's "aprobación manual". promote.py itself
+  # enforces the automatic metrics/fairness gate (perfil RF7) before it will
+  # actually flip the "production" alias.
+  promote:
+    needs: train
+    runs-on: ubuntu-latest
+    environment: credit-model-promotion
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Fetch training task network config
+        id: task-config
+        run: |
+          TASK_DEF_ARN=$(aws cloudformation describe-stacks --stack-name YapepayDevTrainingTaskStack \
+            --query "Stacks[0].Outputs[?ExportName=='yapepay-dev-credit-training-task-def-arn'].OutputValue" --output text)
+          SG_ID=$(aws cloudformation describe-stacks --stack-name YapepayDevTrainingTaskStack \
+            --query "Stacks[0].Outputs[?ExportName=='yapepay-dev-credit-training-sg-id'].OutputValue" --output text)
+          SUBNET_IDS=$(aws cloudformation describe-stacks --stack-name YapepayDevNetworkStack \
+            --query "Stacks[0].Outputs[?ExportName=='yapepay-dev-public-subnet-ids'].OutputValue" --output text)
+          echo "task_def_arn=$TASK_DEF_ARN" >> "$GITHUB_OUTPUT"
+          echo "sg_id=$SG_ID" >> "$GITHUB_OUTPUT"
+          echo "subnet_ids=$SUBNET_IDS" >> "$GITHUB_OUTPUT"
+
+      - name: Run promotion gate and wait for completion
+        id: run-promote
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition ${{ steps.task-config.outputs.task_def_arn }} \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.task-config.outputs.subnet_ids }}],securityGroups=[${{ steps.task-config.outputs.sg_id }}],assignPublicIp=ENABLED}" \
+            --overrides '{"containerOverrides":[{"name":"credit-training","command":["python","-m","training.src.promote"]}]}' \
+            --query "tasks[0].taskArn" --output text)
+          echo "task_arn=$TASK_ARN" >> "$GITHUB_OUTPUT"
+          aws ecs wait tasks-stopped --cluster ${{ env.ECS_CLUSTER }} --tasks "$TASK_ARN"
+
+      - name: Check promotion result (0 = promoted, 1 = gate rejected candidate)
+        run: |
+          EXIT_CODE=$(aws ecs describe-tasks --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks ${{ steps.run-promote.outputs.task_arn }} \
+            --query "tasks[0].containers[0].exitCode" --output text)
+          echo "Promotion task exit code: $EXIT_CODE"
+          echo "See CloudWatch Logs group /yapepay-dev/credit-training for the gate's reasoning."
+          test "$EXIT_CODE" = "0"
+
+  # Once promotion succeeds, roll credit-service so it picks up the new
+  # "production" alias immediately instead of waiting for its next natural deploy.
+  restart-credit-service:
+    needs: promote
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Force new ECS deployment
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service yapepay-dev-credit-service \
+            --force-new-deployment \
+            --no-cli-pager

@@ -48,3 +48,24 @@ jobs:
         run: |
           cd ${{ matrix.service }}
           npm test --if-present
+
+  credit-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd credit-service
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: |
+          cd credit-service
+          pytest tests -v

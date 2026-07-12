@@ -96,7 +96,7 @@ export async function createQRTransactionHandler(input: QRPaymentInput, senderId
 
     await publishTransactionCompleted({
       txId: row.txId, senderId: row.senderId, receiverId: row.receiverId,
-      amount: row.amount.toString(), currency: row.currency,
+      amount: row.amount.toString(), currency: row.currency, transactionType: row.type,
     });
 
     return {

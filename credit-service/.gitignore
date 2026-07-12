@@ -1,0 +1,12 @@
+training/data/raw/**
+!training/data/raw/**/
+training/data/processed/**
+!training/data/processed/**/
+training/mlruns/
+training/mlruns_artifacts/
+training/mlflow.db
+*.csv
+*.parquet
+.venv/
+__pycache__/
+*.pyc
