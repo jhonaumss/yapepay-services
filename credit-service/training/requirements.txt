@@ -1,6 +1,10 @@
 pandas>=2.1
 numpy>=1.26
-scikit-learn>=1.4
+# Pinned <1.6: 1.6 replaced ClassifierMixin's `_estimator_type` class attribute
+# with a new tag system; xgboost 2.1.x's Booster.save_model() still reads the
+# old attribute directly, so mlflow.xgboost.log_model() raises
+# "TypeError: _estimator_type undefined" against sklearn>=1.6.
+scikit-learn>=1.4,<1.6
 # Pinned <3.0: xgboost 3.x serializes base_score in a format shap 0.49's
 # TreeExplainer cannot parse (ValueError: could not convert string to float).
 xgboost>=2.1,<3.0
