@@ -54,7 +54,7 @@ def main() -> int:
 
     try:
         production = client.get_model_version_by_alias(config.REGISTERED_MODEL_NAME, "production")
-    except mlflow.exceptions.RestException:
+    except mlflow.exceptions.MlflowException:
         production = None
 
     if production is not None:
