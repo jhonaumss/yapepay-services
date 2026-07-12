@@ -99,6 +99,7 @@ export async function createTransactionHandler(
         receiverId: row.receiverId,
         amount: row.amount.toString(),
         currency: row.currency,
+        transactionType: row.type,
     });
     return {
       transaction: {

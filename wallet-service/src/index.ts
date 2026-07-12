@@ -3,6 +3,7 @@ dotenv.config();
 
 import express from "express";
 import { walletRouter } from "./routes/wallet.router";
+import { creditRouter } from "./routes/credit.router";
 import { authMiddleware } from "./middleware/auth.middleware";
 import { requireInternalKey } from "./middleware/role.middleware";
 
@@ -45,6 +46,7 @@ app.post("/v1/billeteras/credito", requireInternalKey, async (req, res) => {
 // Rutas protegidas
 app.use(authMiddleware);
 app.use("/v1", walletRouter);
+app.use("/v1", creditRouter);
 
 app.listen(PORT, () => {
   console.log(`wallet-service running on port ${PORT}`);

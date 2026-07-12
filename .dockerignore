@@ -6,3 +6,11 @@
 **/.git
 **/coverage
 **/*.log
+
+credit-service/training/data/raw
+credit-service/training/data/processed
+credit-service/training/mlflow.db
+credit-service/training/mlruns_artifacts
+credit-service/training/mlruns
+**/__pycache__
+**/*.pyc
