@@ -54,6 +54,16 @@ def build_training_dataset() -> pd.DataFrame:
     # accounts, as expected for a growing P2P wallet.
     df["account_tenure_days"] = rng.exponential(scale=150, size=n).clip(0, 900).round(0)
 
+    # Self-reported "had previous default" checkbox: derived from GMSC's real
+    # per-row delinquency counts (unlike requested_amount/term_months below,
+    # this one *is* correlated with the label) with a self-report error rate,
+    # since applicants won't always disclose this accurately.
+    true_default_history = (
+        (df["times_90d_late"] > 0) | (df["times_60_89d_late"] > 0) | (df["times_30_59d_late"] > 0)
+    )
+    self_report_noise = rng.random(n) < 0.10
+    df["had_previous_default"] = (true_default_history.to_numpy() ^ self_report_noise).astype(int)
+
     df["age_band"] = _age_band(df["age"])
     df["employment_status"] = _synthesize_employment(df["monthly_income"], rng)
     # Purely random and independent of the target — fairness-only, never fed to the model.

@@ -25,6 +25,7 @@ def _form_derived_features(application: CreditApplication) -> dict:
         "debt_ratio": debt_ratio,
         "requested_to_income_ratio": requested_to_income_ratio,
         "debt_to_income_with_new_loan": debt_to_income_with_new_loan,
+        "had_previous_default": int(application.had_previous_default),
     }
 
 
@@ -44,7 +45,7 @@ def evaluate(
     pd_array = np.array([probability_of_default])
     score = int(pd_to_score(pd_array)[0])
     risk_category = str(pd_to_risk_category(pd_array)[0])
-    decision = str(pd_to_decision(pd_array)[0])
+    decision = str(pd_to_decision(pd_array, x_row["debt_to_income_with_new_loan"].to_numpy())[0])
 
     user_segment, confidence_level = resolve_user_segment(
         tx_count_30d=int(transactional_features["tx_count_30d"]),

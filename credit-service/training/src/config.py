@@ -35,6 +35,14 @@ RISK_BAJO_MAX_PD = 0.10
 RISK_MEDIO_MAX_PD = 0.30
 APPROVAL_PD_THRESHOLD = 0.25
 
+# Affordability gate, independent of the PD model: requested_amount/term_months
+# are synthesized in dataset_builder.py after the GMSC label is already fixed,
+# so debt_to_income_with_new_loan carries ~no learned signal about default risk
+# and the model alone can't be trusted to reject an unaffordable request.
+# 0.50 mirrors the common subprime-underwriting DTI ceiling (debt_ratio + new
+# installment, both expressed as fractions of income).
+MAX_DEBT_TO_INCOME_WITH_NEW_LOAN = 0.50
+
 # --- MLflow --------------------------------------------------------------
 # No dedicated MLflow tracking *server* — this project's infra keeps things to
 # a single shared RDS instance (each service gets its own logical database,
@@ -75,6 +83,7 @@ FORM_DERIVED_FEATURES = [
     "debt_ratio",
     "requested_to_income_ratio",
     "debt_to_income_with_new_loan",
+    "had_previous_default",
 ]
 TRANSACTIONAL_FEATURES = [
     "tx_count_30d",

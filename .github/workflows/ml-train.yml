@@ -1,14 +1,26 @@
 name: ml-train
 
-# Two ways this fires:
+# Three ways this fires:
 #  - workflow_dispatch: a human kicks off a retrain manually.
 #  - repository_dispatch (type "retrain-credit-model"): the scheduled
 #    EventBridge rule + Lambda in infrastructure/yapepay-infra's
 #    RetrainTriggerStack.
+#  - push to main touching credit-service's training pipeline or ML-facing
+#    code: the CD half of perfil RF7 ("reentrenar automáticamente"). Note
+#    this only automates the `train` job — `promote` still requires a human
+#    to approve the "credit-model-promotion" Environment gate below, so
+#    auto-retraining can never silently push a new model to production.
 on:
   workflow_dispatch: {}
   repository_dispatch:
     types: [retrain-credit-model]
+  push:
+    branches: [main]
+    paths:
+      - "credit-service/training/**"
+      - "credit-service/src/ml/**"
+      - "credit-service/src/schemas.py"
+      - "credit-service/src/config.py"
 
 env:
   AWS_REGION: us-east-1

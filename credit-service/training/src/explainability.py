@@ -28,6 +28,7 @@ FEATURE_LABELS_ES = {
     "account_tenure_days": "Antigüedad de la cuenta",
     "requested_to_income_ratio": "Monto solicitado / ingreso",
     "debt_to_income_with_new_loan": "Deuda/ingreso proyectada con el nuevo crédito",
+    "had_previous_default": "Incumplimiento previo declarado",
 }
 
 
