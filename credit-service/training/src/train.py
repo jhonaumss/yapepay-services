@@ -30,7 +30,7 @@ def main() -> None:
     clf = model.train_model(X_train, y_train, X_val, y_val)
 
     test_pd = model.predict_pd(clf, X_test)
-    decisions = model.pd_to_decision(test_pd)
+    decisions = model.pd_to_decision(test_pd, X_test["debt_to_income_with_new_loan"].to_numpy())
     metrics = model.evaluate(clf, X_test, y_test)
     print("Test metrics:", json.dumps(metrics, indent=2))
 

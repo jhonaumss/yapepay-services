@@ -47,8 +47,13 @@ def pd_to_risk_category(pd_values: np.ndarray) -> np.ndarray:
     )
 
 
-def pd_to_decision(pd_values: np.ndarray) -> np.ndarray:
-    return np.where(pd_values < config.APPROVAL_PD_THRESHOLD, "APROBADO", "RECHAZADO")
+def pd_to_decision(pd_values: np.ndarray, debt_to_income_with_new_loan: np.ndarray) -> np.ndarray:
+    """PD threshold OR affordability gate — either one alone can reject.
+    debt_to_income_with_new_loan bypasses the model because it's ~unlearnable
+    from GMSC (see config.MAX_DEBT_TO_INCOME_WITH_NEW_LOAN)."""
+    affordable = np.asarray(debt_to_income_with_new_loan) < config.MAX_DEBT_TO_INCOME_WITH_NEW_LOAN
+    approved = (pd_values < config.APPROVAL_PD_THRESHOLD) & affordable
+    return np.where(approved, "APROBADO", "RECHAZADO")
 
 
 def ks_statistic(y_true: np.ndarray, pd_values: np.ndarray) -> float:
@@ -58,7 +63,7 @@ def ks_statistic(y_true: np.ndarray, pd_values: np.ndarray) -> float:
 
 def evaluate(model: xgb.XGBClassifier, X: pd.DataFrame, y: pd.Series) -> dict:
     pd_values = predict_pd(model, X)
-    decisions = pd_to_decision(pd_values)
+    decisions = pd_to_decision(pd_values, X["debt_to_income_with_new_loan"].to_numpy())
     approved = decisions == "APROBADO"
     return {
         "roc_auc": float(roc_auc_score(y, pd_values)),
