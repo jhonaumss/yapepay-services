@@ -95,6 +95,19 @@ def build_training_dataset() -> pd.DataFrame:
         debt_ratio_for_dti + new_installment / income_for_ratio
     ).clip(upper=50)
 
+    # estimated_assets_value: GMSC has no assets field, so this is synthetic —
+    # but anchored to real_estate_loans (a real GMSC bureau signal, i.e. does
+    # this person actually hold a mortgage/property loan) rather than pure
+    # noise, so it stands in for the net worth that a flat DTI ratio ignores.
+    # Feeds model.compute_affordability(), never the model itself (see
+    # config.AFFORDABILITY_ONLY_COLUMNS).
+    has_real_estate = df["real_estate_loans"].fillna(0) > 0
+    df["estimated_assets_value"] = np.where(
+        has_real_estate,
+        income_for_ratio * rng.uniform(3, 12, size=n),
+        income_for_ratio * rng.uniform(0, 2, size=n),
+    ).round(-1)
+
     df["user_segment"] = np.select(
         [
             (df["account_tenure_days"] < config.NUEVO_MAX_TENURE_DAYS)
@@ -112,9 +125,11 @@ def build_training_dataset() -> pd.DataFrame:
 
 
 def split_columns(df: pd.DataFrame):
-    """Return (X_model, fairness_df, y) — keeping training features and
-    fairness-audit-only attributes from ever mixing, per perfil 5.4."""
+    """Return (X_model, fairness_df, rules_df, y) — keeping training features,
+    fairness-audit-only attributes and eligibility-gate-only attributes from
+    ever mixing, per perfil 5.4."""
     X = df[config.MODEL_FEATURE_COLUMNS].copy()
     fairness_df = df[config.FAIRNESS_ONLY_COLUMNS].copy()
+    rules_df = df[config.BUSINESS_RULE_ONLY_COLUMNS].copy()
     y = df[config.TARGET_COLUMN].copy()
-    return X, fairness_df, y
+    return X, fairness_df, rules_df, y

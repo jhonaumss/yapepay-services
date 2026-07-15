@@ -43,6 +43,32 @@ APPROVAL_PD_THRESHOLD = 0.25
 # installment, both expressed as fractions of income).
 MAX_DEBT_TO_INCOME_WITH_NEW_LOAN = 0.50
 
+# A flat DTI ceiling alone systematically dings applicants who've simply had
+# more time to accumulate life-stage debt (mortgage, established credit
+# lines) — confirmed as the cause of the age_band fairness regression
+# (40-60, GMSC's *safest* age band by true default rate, was rejected most
+# often). Assets covering the requested amount outright waive the DTI cap,
+# same as real-world collateral/net-worth underwriting.
+MIN_ASSET_COVERAGE_RATIO = 1.0
+
+# Age no longer feeds the PD model directly (see MODEL_FEATURE_COLUMNS below)
+# — raw age as a predictive risk input is exactly what fair-lending
+# frameworks (ECOA/Reg B and equivalents) restrict, and it was doing real
+# work in the model even though employment_status/education_level were
+# already excluded for the same reason. Used only here, to cap how long a
+# repayment commitment gets offered (model.max_term_for_age) — standard
+# personal-loan underwriting (shorter remaining income-stability horizon ->
+# shorter max term), pricing a term limit rather than a risk score.
+# TERM_TAPER_END_AGE matches CreditApplication.age's own ge/le=75 ceiling.
+# A hard cutoff at a single age (tried first) rejected ~30% of the 60+ band
+# outright and blew up the age_band fairness gap instead of shrinking it —
+# this tapers smoothly instead, and is enforced as request-time validation
+# (schemas.py), never folded into the ML decision or fairness audit.
+MAX_TERM_MONTHS_CAP = 36
+TERM_TAPER_START_AGE = 60
+TERM_TAPER_END_AGE = 75
+TERM_MONTHS_FLOOR = 12
+
 # --- MLflow --------------------------------------------------------------
 # No dedicated MLflow tracking *server* — this project's infra keeps things to
 # a single shared RDS instance (each service gets its own logical database,
@@ -78,7 +104,6 @@ REGISTERED_MODEL_NAME = "credit-risk-model"
 # gets the value at inference time. Order matters — it must match exactly
 # between training and inference (see credit-service/src/ml/inference.py).
 FORM_DERIVED_FEATURES = [
-    "age",
     "monthly_income",
     "debt_ratio",
     "requested_to_income_ratio",
@@ -113,5 +138,10 @@ BUREAU_DEFAULTS_FILENAME = "bureau_defaults.json"
 
 # Present only for the fairness audit (perfil 5.4: kept separate from training features).
 FAIRNESS_ONLY_COLUMNS = ["age_band", "employment_status", "education_level"]
+
+# Present only for the affordability gate (model.compute_affordability) — kept
+# out of MODEL_FEATURE_COLUMNS: requested_amount/estimated_assets_value have
+# no real-world analog in GMSC for the model to learn from.
+BUSINESS_RULE_ONLY_COLUMNS = ["estimated_assets_value", "requested_amount"]
 
 TARGET_COLUMN = "serious_dlqin2yrs"

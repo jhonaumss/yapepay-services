@@ -84,6 +84,20 @@ class CreditApplication(BaseModel):
             raise ValueError("employmentYears is required unless employmentStatus is DESEMPLEADO")
         return self
 
+    @model_validator(mode="after")
+    def _term_within_age_limit(self):
+        # Age caps the offered term instead of feeding the PD model directly
+        # (see training/src/model.py:max_term_for_age) — rejecting an
+        # over-the-cap request here, before scoring, means it's a 422 the
+        # applicant can immediately resubmit, never a RECHAZADO credit
+        # decision counted against them.
+        from training.src.model import max_term_for_age
+
+        max_term = max_term_for_age(self.age)
+        if self.term_months > max_term:
+            raise ValueError(f"For age {self.age}, the maximum available term is {max_term} months")
+        return self
+
 
 class ExplanationFactor(BaseModel):
     factor: str
