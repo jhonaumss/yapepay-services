@@ -83,8 +83,16 @@ def build_training_dataset() -> pd.DataFrame:
     df["requested_amount"] = (income_for_ratio * rng.uniform(1, 6, size=n)).round(-1)
     df["requested_to_income_ratio"] = (df["requested_amount"] / income_for_ratio).clip(upper=50)
     new_installment = df["requested_amount"] / df["term_months"]
+    # fillna(median), not fillna(0): missing debt_ratio in GMSC correlates with
+    # missing monthly_income, which is exactly the population _synthesize_employment
+    # draws DESEMPLEADO from — treating unknown debt as "zero debt" systematically
+    # flattered that group's affordability and blew up the fairness gate
+    # (employment_status demographic_parity_difference 0.10 -> 0.35, see promote.py
+    # rejection). The population median is a neutral stand-in, same pattern as
+    # bureau_defaults elsewhere in this pipeline.
+    debt_ratio_for_dti = df["debt_ratio"].fillna(df["debt_ratio"].median())
     df["debt_to_income_with_new_loan"] = (
-        df["debt_ratio"].fillna(0) + new_installment / income_for_ratio
+        debt_ratio_for_dti + new_installment / income_for_ratio
     ).clip(upper=50)
 
     df["user_segment"] = np.select(
