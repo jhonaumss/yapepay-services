@@ -16,22 +16,27 @@ from .mlflow_logging import log_training_run
 def main() -> None:
     print("Building training dataset (GMSC + PaySim-derived features)...")
     df = build_training_dataset()
-    X, fairness_df, y = split_columns(df)
+    X, fairness_df, rules_df, y = split_columns(df)
     print(f"Dataset shape: {X.shape}, default rate: {y.mean():.4f}")
 
-    X_train, X_temp, y_train, y_temp, fair_train, fair_temp = train_test_split(
-        X, y, fairness_df, test_size=0.30, random_state=config.RANDOM_SEED, stratify=y
+    X_train, X_temp, y_train, y_temp, fair_train, fair_temp, rules_train, rules_temp = train_test_split(
+        X, y, fairness_df, rules_df, test_size=0.30, random_state=config.RANDOM_SEED, stratify=y
     )
-    X_val, X_test, y_val, y_test, fair_val, fair_test = train_test_split(
-        X_temp, y_temp, fair_temp, test_size=0.50, random_state=config.RANDOM_SEED, stratify=y_temp
+    X_val, X_test, y_val, y_test, fair_val, fair_test, rules_val, rules_test = train_test_split(
+        X_temp, y_temp, fair_temp, rules_temp, test_size=0.50, random_state=config.RANDOM_SEED, stratify=y_temp
     )
 
     print("Training XGBoost model...")
     clf = model.train_model(X_train, y_train, X_val, y_val)
 
+    affordable_test = model.compute_affordability(
+        X_test["debt_to_income_with_new_loan"].to_numpy(),
+        rules_test["estimated_assets_value"].to_numpy(),
+        rules_test["requested_amount"].to_numpy(),
+    )
     test_pd = model.predict_pd(clf, X_test)
-    decisions = model.pd_to_decision(test_pd, X_test["debt_to_income_with_new_loan"].to_numpy())
-    metrics = model.evaluate(clf, X_test, y_test)
+    decisions = model.pd_to_decision(test_pd, affordable_test)
+    metrics = model.evaluate(clf, X_test, y_test, affordable_test)
     print("Test metrics:", json.dumps(metrics, indent=2))
 
     print("Running fairness audit on the test set...")

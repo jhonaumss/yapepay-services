@@ -6,7 +6,13 @@ explanation factors. Reuses training's business-rule functions directly
 import numpy as np
 import pandas as pd
 from training.src.explainability import explain_row
-from training.src.model import pd_to_decision, pd_to_risk_category, pd_to_score, predict_pd
+from training.src.model import (
+    compute_affordability,
+    pd_to_decision,
+    pd_to_risk_category,
+    pd_to_score,
+    predict_pd,
+)
 
 from ..features.feature_store import resolve_user_segment
 from ..schemas import CreditApplication
@@ -20,7 +26,6 @@ def _form_derived_features(application: CreditApplication) -> dict:
     new_installment = application.requested_amount / application.term_months
     debt_to_income_with_new_loan = min(debt_ratio + new_installment / income, 50.0)
     return {
-        "age": float(application.age),
         "monthly_income": application.monthly_income,
         "debt_ratio": debt_ratio,
         "requested_to_income_ratio": requested_to_income_ratio,
@@ -45,7 +50,12 @@ def evaluate(
     pd_array = np.array([probability_of_default])
     score = int(pd_to_score(pd_array)[0])
     risk_category = str(pd_to_risk_category(pd_array)[0])
-    decision = str(pd_to_decision(pd_array, x_row["debt_to_income_with_new_loan"].to_numpy())[0])
+    affordable = compute_affordability(
+        x_row["debt_to_income_with_new_loan"].to_numpy(),
+        np.array([application.estimated_assets_value]),
+        np.array([application.requested_amount]),
+    )
+    decision = str(pd_to_decision(pd_array, affordable)[0])
 
     user_segment, confidence_level = resolve_user_segment(
         tx_count_30d=int(transactional_features["tx_count_30d"]),

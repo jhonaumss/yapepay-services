@@ -8,7 +8,6 @@ import shap
 import xgboost as xgb
 
 FEATURE_LABELS_ES = {
-    "age": "Edad",
     "monthly_income": "Ingreso mensual",
     "debt_ratio": "Relación deuda/ingreso",
     "revolving_utilization": "Utilización de líneas de crédito",

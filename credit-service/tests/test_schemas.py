@@ -47,6 +47,15 @@ def test_term_months_out_of_range_rejected(term_months):
         CreditApplication(**_base_kwargs(termMonths=term_months))
 
 
+def test_term_over_age_cap_rejected():
+    with pytest.raises(ValidationError):
+        CreditApplication(**_base_kwargs(age=75, termMonths=36))
+
+
+def test_term_within_age_cap_accepted():
+    CreditApplication(**_base_kwargs(age=75, termMonths=12))
+
+
 def test_defaults_for_optional_financial_fields():
     app = CreditApplication(**_base_kwargs())
     assert app.existing_debt == 0
